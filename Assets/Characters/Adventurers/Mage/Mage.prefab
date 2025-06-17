@@ -94,6 +94,7 @@ GameObject:
   m_Component:
   - component: {fileID: 755308284309110338}
   - component: {fileID: 5633733767765297547}
+  - component: {fileID: 2752196068274348602}
   - component: {fileID: 8420561170371664604}
   - component: {fileID: 6994000382588456149}
   m_Layer: 0
@@ -137,9 +138,24 @@ MonoBehaviour:
   isEnemy: 0
   enemyPowerLevel: 0
   role: 1
-  intelligence: 0
-  maxHealth: 200
-  maxResource: 100
+  intelligence: 1
+  maxHealth: 1000
+  maxResource: 1000
+  startingResource: 1000
+  resourceRegen: 10
+  resourceType: 0
+--- !u!114 &2752196068274348602
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1204481746276270545}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c4e7a122e315f2448c1cb8f8fdab1df, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!95 &8420561170371664604
 Animator:
   serializedVersion: 5
@@ -173,13 +189,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a59f045367cacbb46b3330d977bd9005, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetingWeights:
+  - targetingType: 2
+    weight: 5
+  - targetingType: 4
+    weight: 2
+  - targetingType: 5
+    weight: 1
   damage: 100
   cooldown: 5
   threatMultiplier: 1
   animationDelay: 0.5
   attackAnimationTrigger: Attack
   projectilePrefab: {fileID: 263224731993250228, guid: 4e5052e4e4b237146907fb48b87b219e, type: 3}
-  projectileSpeed: 12
+  projectileSpeed: 20
   projectileSpawnPoint: {fileID: 4350831976097606475}
 --- !u!1 &1318768680208249767
 GameObject:
@@ -251,8 +274,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
+  m_SortingLayerID: 1733882645
+  m_SortingLayer: 1
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: b11bd69efcf761c4cbd065c6d7d58a0d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

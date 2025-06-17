@@ -180,7 +180,6 @@ public class CharacterManager : Singleton<CharacterManager>
         if (activeCharacterIndex != -1)
         {
             activePlayerCharacters[activeCharacterIndex] = null;
-            // Player characters keep their UnitFrames visible even when dead
         }
         else
         {
@@ -202,7 +201,7 @@ public class CharacterManager : Singleton<CharacterManager>
         Destroy(character.gameObject);
     }
 
-    public Character GetOppositeCharacter(Character character)
+    public Character GetClosestTarget(Character character)
     {
         // Get the appropriate lists based on which side the character is on
         var sourceList = character.IsEnemy ? activeEnemyCharacters : activePlayerCharacters;

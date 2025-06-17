@@ -1,23 +1,30 @@
+using System.Collections;
 using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
     private Character target;
-    private int damage;
-    private float threatMultiplier;
-    private Character source;
-    private float speed = 10f;
+    private Character attacker;
+    private ProjectileAttack attack;
 
-    public void Initialize(Character target, int damage, float threatMultiplier, Character source)
+    private bool isHit = false;
+
+    private Animator animator;
+
+    public void Initialize(Character target, Character attacker, ProjectileAttack attack)
     {
         this.target = target;
-        this.damage = damage;
-        this.threatMultiplier = threatMultiplier;
-        this.source = source;
+        this.attacker = attacker;
+        this.attack = attack;
+
+        animator = GetComponentInChildren<Animator>();
     }
 
     private void Update()
     {
+        if (isHit)
+            return;
+
         if (target == null)
         {
             Destroy(gameObject);
@@ -27,15 +34,24 @@ public class Projectile : MonoBehaviour
         // Move towards target
         Vector3 targetPosition = target.transform.position + new Vector3(0f, 0.5f, 0f);
         Vector3 direction = (targetPosition - transform.position).normalized;
-        transform.position += direction * speed * Time.deltaTime;
+        transform.position += direction * attack.ProjectileSpeed * Time.deltaTime;
 
         // Check if we've hit the target
         if (Vector3.Distance(transform.position, targetPosition) < 0.1f)
         {
-            target.Damage(damage);
-            float threatGenerated = damage * threatMultiplier;
-            target.AddThreat(source, threatGenerated);
-            Destroy(gameObject);
+            isHit = true;
+
+            CharacterAttack.ApplyDamageAndThreat(target, attacker, attack);
+
+            animator.SetTrigger("Hit");
+
+            StartCoroutine(DestroyAfterAnimation());
         }
+    }
+
+    private IEnumerator DestroyAfterAnimation()
+    {
+        yield return new WaitForSeconds(0.5f);
+        Destroy(gameObject);
     }
 }

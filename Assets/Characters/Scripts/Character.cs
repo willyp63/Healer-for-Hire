@@ -48,6 +48,14 @@ public class Character : MonoBehaviour
     public int MaxResource => maxResource;
 
     [SerializeField]
+    private int startingResource = 100;
+    public int StartingResource => startingResource;
+
+    [SerializeField]
+    private int resourceRegen = 10;
+    public int ResourceRegen => resourceRegen;
+
+    [SerializeField]
     private ResourceType resourceType = ResourceType.Mana;
     public ResourceType ResourceType => resourceType;
 
@@ -66,15 +74,21 @@ public class Character : MonoBehaviour
     private Dictionary<Character, float> threatTable = new();
     public Dictionary<Character, float> ThreatTable => threatTable;
 
-    protected Animator animator;
     private CharacterAttack[] attacks;
+    public CharacterAttack[] Attacks => attacks;
+
+    private CharacterAI characterAI;
+    private Animator animator;
 
     private void Start()
     {
+        characterAI = GetComponent<CharacterAI>();
         animator = GetComponent<Animator>();
         attacks = GetComponents<CharacterAttack>();
         currentHealth = MaxHealth;
+        currentResource = StartingResource;
         StartCoroutine(BattleLoop());
+        StartCoroutine(ResourceUpdate());
     }
 
     private IEnumerator BattleLoop()
@@ -94,37 +108,31 @@ public class Character : MonoBehaviour
         CharacterManager.Instance.RemoveCharacter(this);
     }
 
+    private IEnumerator ResourceUpdate()
+    {
+        while (currentHealth > 0)
+        {
+            UpdateResource();
+            yield return new WaitForSeconds(1f);
+        }
+    }
+
     private void TryToAttack()
     {
         if (Time.time - lastActionTime < globalCooldown)
             return;
 
-        var attackDistribution = GetAttackDistribution();
-        var bestAttack = DistributionUtils.SampleDistribution(
-            attackDistribution,
-            Mathf.Max(1f - Intelligence, 0.1f)
-        );
-
-        if (bestAttack == null)
+        // TODO: implement random decision making when there is no AI
+        if (characterAI == null)
             return;
 
-        bestAttack.Attack();
+        var (attack, target) = characterAI.MakeDecision();
+
+        if (attack == null)
+            return;
+
+        attack.Attack(target);
         lastActionTime = Time.time;
-    }
-
-    private Dictionary<CharacterAttack, float> GetAttackDistribution()
-    {
-        Dictionary<CharacterAttack, float> attackDistribution = new();
-
-        foreach (var attack in attacks)
-        {
-            if (attack.IsOnCooldown())
-                continue;
-
-            attackDistribution[attack] = attack.GetAttackEffectiveness();
-        }
-
-        return attackDistribution;
     }
 
     private void UpdateThreatTable()
@@ -141,6 +149,18 @@ public class Character : MonoBehaviour
                 threatTable.Remove(key);
             }
         }
+    }
+
+    public void AddResource(int amount)
+    {
+        currentResource += amount;
+        currentResource = Math.Min(currentResource, MaxResource);
+    }
+
+    private void UpdateResource()
+    {
+        currentResource += resourceRegen;
+        currentResource = Math.Min(currentResource, MaxResource);
     }
 
     public Character GetHighestThreatTarget()
@@ -173,6 +193,11 @@ public class Character : MonoBehaviour
     {
         currentHealth -= amount;
         currentHealth = Math.Max(currentHealth, 0);
+
+        if (ResourceType == ResourceType.Rage)
+        {
+            AddResource(2 * (int)(amount * 100f / MaxHealth));
+        }
 
         animator.SetTrigger("Hurt");
     }

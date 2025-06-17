@@ -12,11 +12,11 @@ public class MeleeAttack : CharacterAttack
     [SerializeField]
     private float attackRange = 0.3f;
 
-    public override void Attack()
+    public override void Attack(Character target)
     {
-        base.Attack();
+        base.Attack(target);
 
-        StartCoroutine(PerformAttack(GetTarget()));
+        StartCoroutine(PerformAttack(target));
     }
 
     private IEnumerator PerformAttack(Character target)
@@ -51,7 +51,7 @@ public class MeleeAttack : CharacterAttack
             && Vector3.Distance(transform.position, target.transform.position) <= attackRange
         )
         {
-            ApplyDamageAndThreat(target);
+            CharacterAttack.ApplyDamageAndThreat(target, character, this);
         }
 
         // Dash back to original position

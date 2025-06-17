@@ -8,15 +8,16 @@ public class ProjectileAttack : CharacterAttack
 
     [SerializeField]
     private float projectileSpeed = 10f;
+    public float ProjectileSpeed => projectileSpeed;
 
     [SerializeField]
     private Transform projectileSpawnPoint;
 
-    public override void Attack()
+    public override void Attack(Character target)
     {
-        base.Attack();
+        base.Attack(target);
 
-        StartCoroutine(PerformAttack(GetTarget()));
+        StartCoroutine(PerformAttack(target));
     }
 
     private IEnumerator PerformAttack(Character target)
@@ -36,12 +37,7 @@ public class ProjectileAttack : CharacterAttack
 
         if (projectileComponent != null)
         {
-            projectileComponent.Initialize(
-                target,
-                damage,
-                threatMultiplier,
-                GetComponent<Character>()
-            );
+            projectileComponent.Initialize(target, character, this);
         }
         else
         {

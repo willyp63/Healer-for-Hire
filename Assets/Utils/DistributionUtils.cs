@@ -6,36 +6,47 @@ using UnityEngine;
 public class DistributionUtils : MonoBehaviour
 {
     public static Dictionary<T, float> CombineDistributions<T>(
-        Dictionary<T, float> distribution1,
-        Dictionary<T, float> distribution2,
-        float weight1 = 0.5f,
-        float weight2 = 0.5f
+        Dictionary<T, float>[] distributions,
+        float[] weights = null
     )
     {
+        if (distributions == null || distributions.Length == 0)
+            return new Dictionary<T, float>();
+
+        // If weights are not provided, use equal weights
+        if (weights == null || weights.Length != distributions.Length)
+        {
+            weights = new float[distributions.Length];
+            float equalWeight = 1f / distributions.Length;
+            for (int i = 0; i < weights.Length; i++)
+                weights[i] = equalWeight;
+        }
+
         var combinedDistribution = new Dictionary<T, float>();
 
-        // Get all unique keys from both distributions
+        // Get all unique keys from all distributions
         var allKeys = new HashSet<T>();
-        if (distribution1 != null)
+        foreach (var distribution in distributions)
         {
-            foreach (var key in distribution1.Keys)
-                allKeys.Add(key);
-        }
-        if (distribution2 != null)
-        {
-            foreach (var key in distribution2.Keys)
-                allKeys.Add(key);
+            if (distribution != null)
+            {
+                foreach (var key in distribution.Keys)
+                    allKeys.Add(key);
+            }
         }
 
         // Combine the distributions with weighted averaging
         foreach (var key in allKeys)
         {
-            float value1 =
-                distribution1 != null && distribution1.ContainsKey(key) ? distribution1[key] : 0f;
-            float value2 =
-                distribution2 != null && distribution2.ContainsKey(key) ? distribution2[key] : 0f;
-
-            float combinedValue = (value1 * weight1) + (value2 * weight2);
+            float combinedValue = 0f;
+            for (int i = 0; i < distributions.Length; i++)
+            {
+                float value =
+                    distributions[i] != null && distributions[i].ContainsKey(key)
+                        ? distributions[i][key]
+                        : 0f;
+                combinedValue += value * weights[i];
+            }
             combinedDistribution[key] = combinedValue;
         }
 

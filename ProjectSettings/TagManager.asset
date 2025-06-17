@@ -44,3 +44,12 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Characters
+    uniqueID: 1733882645
+    locked: 0
+  - name: Floating Text
+    uniqueID: 407793749
+    locked: 0
+  - name: Unit Frames
+    uniqueID: 3149586927
+    locked: 0
