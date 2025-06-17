@@ -3639,12 +3639,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCharacters:
-  - {fileID: 5633733767765297547, guid: e6d3bb09693c11e40b09b5ee49304a84, type: 3}
   - {fileID: 5633733767765297547, guid: 386316b8872debc4095b5d5052493823, type: 3}
   - {fileID: 5633733767765297547, guid: e6d3bb09693c11e40b09b5ee49304a84, type: 3}
-  - {fileID: 5633733767765297547, guid: 386316b8872debc4095b5d5052493823, type: 3}
-  - {fileID: 5633733767765297547, guid: 386316b8872debc4095b5d5052493823, type: 3}
   enemyCharacters:
+  - {fileID: 5633733767765297547, guid: 1724f26f72bdd2e4890ebd370f8b4ac0, type: 3}
+  - {fileID: 5633733767765297547, guid: 1724f26f72bdd2e4890ebd370f8b4ac0, type: 3}
+  - {fileID: 5633733767765297547, guid: 1724f26f72bdd2e4890ebd370f8b4ac0, type: 3}
   - {fileID: 5633733767765297547, guid: 1724f26f72bdd2e4890ebd370f8b4ac0, type: 3}
   - {fileID: 5633733767765297547, guid: 1724f26f72bdd2e4890ebd370f8b4ac0, type: 3}
 --- !u!4 &1719569919

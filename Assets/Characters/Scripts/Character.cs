@@ -3,6 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum CharacterRole
+{
+    Tank,
+    Damage,
+    Healer,
+}
+
 public class Character : MonoBehaviour
 {
     [SerializeField]
@@ -10,18 +17,35 @@ public class Character : MonoBehaviour
     public bool IsEnemy => isEnemy;
 
     [SerializeField]
+    private int enemyPowerLevel = 0;
+    public int EnemyPowerLevel => enemyPowerLevel;
+
+    [SerializeField]
+    private CharacterRole role = CharacterRole.Damage;
+    public CharacterRole Role => role;
+
+    [SerializeField]
+    private float intelligence = 0f;
+    public float Intelligence => intelligence;
+
+    [SerializeField]
     private int maxHealth = 100;
     public int MaxHealth => maxHealth;
 
     private int currentHealth = 0;
-    private CharacterAttack[] attacks;
-    private Character currentTarget;
+    public int CurrentHealth => currentHealth;
+
+    private const float threatDecayRate = 0.1f;
+    private const float threatThreshold = 50f;
+    private const float globalCooldown = 1f;
+
+    private float lastActionTime = Mathf.NegativeInfinity;
+
     private Dictionary<Character, float> threatTable = new();
-    private float threatDecayRate = 0.1f;
-    private float threatThreshold = 50f;
-    private float lastAttackTime;
+    public Dictionary<Character, float> ThreatTable => threatTable;
 
     protected Animator animator;
+    private CharacterAttack[] attacks;
 
     private void Start()
     {
@@ -33,40 +57,12 @@ public class Character : MonoBehaviour
 
     private IEnumerator BattleLoop()
     {
+        yield return new WaitForSeconds(0.1f);
+
         while (currentHealth > 0)
         {
-            if (currentTarget == null || currentTarget.currentHealth <= 0)
-            {
-                currentTarget = CharacterManager.Instance.GetOppositeCharacter(this);
-            }
-
-            if (currentTarget != null && currentTarget.currentHealth > 0)
-            {
-                // Check if any attack is ready
-                bool attacked = false;
-                foreach (var attack in attacks)
-                {
-                    if (Time.time - lastAttackTime >= attack.Cooldown)
-                    {
-                        attack.Attack(currentTarget);
-                        lastAttackTime = Time.time;
-                        attacked = true;
-                        break;
-                    }
-                }
-
-                if (!attacked)
-                {
-                    // Check threat table for potential target switch
-                    UpdateThreatTable();
-                    Character highestThreatTarget = GetHighestThreatTarget();
-                    if (highestThreatTarget != null && highestThreatTarget != currentTarget)
-                    {
-                        currentTarget = highestThreatTarget;
-                    }
-                }
-            }
-
+            UpdateThreatTable();
+            TryToAttack();
             yield return new WaitForSeconds(0.1f);
         }
 
@@ -74,6 +70,39 @@ public class Character : MonoBehaviour
         animator.SetTrigger("Die");
         yield return new WaitForSeconds(2f);
         CharacterManager.Instance.RemoveCharacter(this);
+    }
+
+    private void TryToAttack()
+    {
+        if (Time.time - lastActionTime < globalCooldown)
+            return;
+
+        var attackDistribution = GetAttackDistribution();
+        var bestAttack = DistributionUtils.SampleDistribution(
+            attackDistribution,
+            Mathf.Max(1f - Intelligence, 0.1f)
+        );
+
+        if (bestAttack == null)
+            return;
+
+        bestAttack.Attack();
+        lastActionTime = Time.time;
+    }
+
+    private Dictionary<CharacterAttack, float> GetAttackDistribution()
+    {
+        Dictionary<CharacterAttack, float> attackDistribution = new();
+
+        foreach (var attack in attacks)
+        {
+            if (attack.IsOnCooldown())
+                continue;
+
+            attackDistribution[attack] = attack.GetAttackEffectiveness();
+        }
+
+        return attackDistribution;
     }
 
     private void UpdateThreatTable()
@@ -92,7 +121,7 @@ public class Character : MonoBehaviour
         }
     }
 
-    private Character GetHighestThreatTarget()
+    public Character GetHighestThreatTarget()
     {
         Character highestThreatTarget = null;
         float highestThreat = threatThreshold;

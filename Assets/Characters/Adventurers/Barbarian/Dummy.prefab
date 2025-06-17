@@ -132,6 +132,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   isEnemy: 1
+  enemyPowerLevel: 1
+  role: 1
+  intelligence: 0
   maxHealth: 20000
 --- !u!95 &8420561170371664604
 Animator:

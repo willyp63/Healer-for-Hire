@@ -12,7 +12,14 @@ public class MeleeAttack : CharacterAttack
     [SerializeField]
     private float attackRange = 0.3f;
 
-    protected override IEnumerator PerformAttack(Character target)
+    public override void Attack()
+    {
+        base.Attack();
+
+        StartCoroutine(PerformAttack(GetTarget()));
+    }
+
+    private IEnumerator PerformAttack(Character target)
     {
         if (target == null)
             yield break;

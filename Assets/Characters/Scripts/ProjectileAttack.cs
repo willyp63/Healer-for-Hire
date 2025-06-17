@@ -12,7 +12,14 @@ public class ProjectileAttack : CharacterAttack
     [SerializeField]
     private Transform projectileSpawnPoint;
 
-    protected override IEnumerator PerformAttack(Character target)
+    public override void Attack()
+    {
+        base.Attack();
+
+        StartCoroutine(PerformAttack(GetTarget()));
+    }
+
+    private IEnumerator PerformAttack(Character target)
     {
         // Wait for animation to reach the right point
         yield return new WaitForSeconds(animationDelay);
