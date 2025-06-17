@@ -147,7 +147,7 @@ GameObject:
   - component: {fileID: 4382471279958991172}
   - component: {fileID: 5702828668001531140}
   m_Layer: 5
-  m_Name: Power Text
+  m_Name: Resource Text
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -434,7 +434,7 @@ GameObject:
   - component: {fileID: 6241757045219399290}
   - component: {fileID: 82295517220692235}
   m_Layer: 5
-  m_Name: Power Frame
+  m_Name: Resource Frame
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -662,7 +662,7 @@ GameObject:
   - component: {fileID: 4651740113803539638}
   - component: {fileID: 8815888533483504193}
   m_Layer: 5
-  m_Name: Power Fill
+  m_Name: Resource Fill
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -735,6 +735,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3538448857146905967}
+  - component: {fileID: 509978785789069423}
   m_Layer: 5
   m_Name: Unit Frame
   m_TagString: Untagged
@@ -772,6 +773,23 @@ RectTransform:
   m_AnchoredPosition: {x: -353, y: 180}
   m_SizeDelta: {x: 240, y: 60}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &509978785789069423
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7041308767597737338}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1838e9c68e150a34bbf6f2ad98eeb18b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  portraitImage: {fileID: 8161725032443168059}
+  healthFill: {fileID: 5796858894403868294}
+  healthText: {fileID: 6243647918599328471}
+  resourceFill: {fileID: 8815888533483504193}
+  resourceText: {fileID: 5702828668001531140}
 --- !u!1 &7440944506705201002
 GameObject:
   m_ObjectHideFlags: 0
@@ -860,7 +878,7 @@ GameObject:
   - component: {fileID: 8316245629634365470}
   - component: {fileID: 344724544838198113}
   m_Layer: 5
-  m_Name: Power BG
+  m_Name: Resource BG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

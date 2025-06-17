@@ -131,11 +131,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00a97e8a70def7b4db6342688ac1e124, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  portraitSprite: {fileID: 21300000, guid: b4794129b61dee24b9d8951004f490ae, type: 3}
   isEnemy: 1
   enemyPowerLevel: 1
   role: 1
   intelligence: 0
-  maxHealth: 20000
+  maxHealth: 2000
+  maxResource: 100
+  resourceType: 1
 --- !u!95 &8420561170371664604
 Animator:
   serializedVersion: 5

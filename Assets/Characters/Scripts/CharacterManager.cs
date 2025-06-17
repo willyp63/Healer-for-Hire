@@ -12,26 +12,34 @@ public class CharacterManager : Singleton<CharacterManager>
     [SerializeField]
     private List<Character> enemyCharacters = new();
 
+    [SerializeField]
     private List<CharacterSlot> playerSlots;
+
+    [SerializeField]
     private List<CharacterSlot> enemySlots;
+
+    [SerializeField]
+    private List<UnitFrameUI> playerFrames;
+
+    [SerializeField]
+    private List<UnitFrameUI> enemyFrames;
 
     private Character[] activePlayerCharacters;
     private Character[] activeEnemyCharacters;
 
+    // Mapping between characters and their UnitFrameUI
+    private Dictionary<Character, UnitFrameUI> characterToUnitFrame = new();
+
+    // Update interval for UI
+    private const float UI_UPDATE_INTERVAL = 0.1f;
+
     private void Start()
     {
-        var characterSlots = FindObjectsOfType<CharacterSlot>();
-        playerSlots = new(Array.FindAll(characterSlots, (slot) => !slot.IsEnemy));
-        enemySlots = new(Array.FindAll(characterSlots, (slot) => slot.IsEnemy));
-
         activePlayerCharacters = new Character[playerSlots.Count];
         activeEnemyCharacters = new Character[enemySlots.Count];
 
-        // Sort slots by position from left to right
-        playerSlots.Sort((a, b) => a.transform.position.y.CompareTo(b.transform.position.y));
-        enemySlots.Sort((a, b) => a.transform.position.y.CompareTo(b.transform.position.y));
-
         InitializeBattle();
+        StartCoroutine(UIUpdateLoop());
     }
 
     private void InitializeBattle()
@@ -52,6 +60,13 @@ public class CharacterManager : Singleton<CharacterManager>
                 Quaternion.identity
             );
             activePlayerCharacters[slotIndex] = character;
+
+            // Assign corresponding UnitFrameUI
+            if (slotIndex < playerFrames.Count)
+            {
+                characterToUnitFrame[character] = playerFrames[slotIndex];
+                InitializeUnitFrame(character, playerFrames[slotIndex]);
+            }
         }
 
         // Spawn enemy characters
@@ -71,7 +86,17 @@ public class CharacterManager : Singleton<CharacterManager>
             );
             character.transform.localScale = new(-1, 1, 1);
             activeEnemyCharacters[slotIndex] = character;
+
+            // Assign corresponding UnitFrameUI
+            if (slotIndex < enemyFrames.Count)
+            {
+                characterToUnitFrame[character] = enemyFrames[slotIndex];
+                InitializeUnitFrame(character, enemyFrames[slotIndex]);
+            }
         }
+
+        // Hide unused UnitFrames
+        HideUnusedUnitFrames();
 
         Debug.Log(
             $"Player characters: {string.Join(", ", new List<Character>(activePlayerCharacters).ConvertAll(c => c?.name ?? "null"))}"
@@ -79,6 +104,69 @@ public class CharacterManager : Singleton<CharacterManager>
         Debug.Log(
             $"Enemy characters: {string.Join(", ", new List<Character>(activeEnemyCharacters).ConvertAll(c => c?.name ?? "null"))}"
         );
+    }
+
+    private void HideUnusedUnitFrames()
+    {
+        // Hide unused player UnitFrames
+        for (int i = 0; i < playerFrames.Count; i++)
+        {
+            if (activePlayerCharacters[i] == null)
+            {
+                playerFrames[i].gameObject.SetActive(false);
+            }
+        }
+
+        // Hide unused enemy UnitFrames
+        for (int i = 0; i < enemyFrames.Count; i++)
+        {
+            if (activeEnemyCharacters[i] == null)
+            {
+                enemyFrames[i].gameObject.SetActive(false);
+            }
+        }
+    }
+
+    private void InitializeUnitFrame(Character character, UnitFrameUI unitFrame)
+    {
+        // Set initial health and resource values
+        unitFrame.SetHealth(character.CurrentHealth, character.MaxHealth);
+        unitFrame.SetResource(
+            character.CurrentResource,
+            character.MaxResource,
+            character.ResourceType
+        );
+
+        // Set portrait if available
+        unitFrame.SetPortrait(character.PortraitSprite);
+    }
+
+    private IEnumerator UIUpdateLoop()
+    {
+        while (true)
+        {
+            UpdateAllUnitFrames();
+            yield return new WaitForSeconds(UI_UPDATE_INTERVAL);
+        }
+    }
+
+    private void UpdateAllUnitFrames()
+    {
+        foreach (var kvp in characterToUnitFrame)
+        {
+            var character = kvp.Key;
+            var unitFrame = kvp.Value;
+
+            if (character != null && unitFrame != null)
+            {
+                unitFrame.SetHealth(character.CurrentHealth, character.MaxHealth);
+                unitFrame.SetResource(
+                    character.CurrentResource,
+                    character.MaxResource,
+                    character.ResourceType
+                );
+            }
+        }
     }
 
     public List<Character> GetActivePlayerCharacters() => new(activePlayerCharacters);
@@ -92,6 +180,7 @@ public class CharacterManager : Singleton<CharacterManager>
         if (activeCharacterIndex != -1)
         {
             activePlayerCharacters[activeCharacterIndex] = null;
+            // Player characters keep their UnitFrames visible even when dead
         }
         else
         {
@@ -99,8 +188,16 @@ public class CharacterManager : Singleton<CharacterManager>
             if (activeEnemyCharacterIndex != -1)
             {
                 activeEnemyCharacters[activeEnemyCharacterIndex] = null;
+                // Hide enemy UnitFrame when they die
+                if (activeEnemyCharacterIndex < enemyFrames.Count)
+                {
+                    enemyFrames[activeEnemyCharacterIndex].gameObject.SetActive(false);
+                }
             }
         }
+
+        // Remove from UnitFrame mapping
+        characterToUnitFrame.Remove(character);
 
         Destroy(character.gameObject);
     }

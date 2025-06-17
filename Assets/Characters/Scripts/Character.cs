@@ -10,8 +10,19 @@ public enum CharacterRole
     Healer,
 }
 
+public enum ResourceType
+{
+    Mana,
+    Rage,
+    Energy,
+}
+
 public class Character : MonoBehaviour
 {
+    [SerializeField]
+    private Sprite portraitSprite;
+    public Sprite PortraitSprite => portraitSprite;
+
     [SerializeField]
     private bool isEnemy = false;
     public bool IsEnemy => isEnemy;
@@ -31,6 +42,17 @@ public class Character : MonoBehaviour
     [SerializeField]
     private int maxHealth = 100;
     public int MaxHealth => maxHealth;
+
+    [SerializeField]
+    private int maxResource = 100;
+    public int MaxResource => maxResource;
+
+    [SerializeField]
+    private ResourceType resourceType = ResourceType.Mana;
+    public ResourceType ResourceType => resourceType;
+
+    private int currentResource = 0;
+    public int CurrentResource => currentResource;
 
     private int currentHealth = 0;
     public int CurrentHealth => currentHealth;
