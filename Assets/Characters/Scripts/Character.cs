@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public enum CharacterRole
@@ -73,6 +74,9 @@ public class Character : MonoBehaviour
 
     private Dictionary<Character, float> threatTable = new();
     public Dictionary<Character, float> ThreatTable => threatTable;
+
+    private List<StatusEffect> activeEffects = new List<StatusEffect>();
+    public IReadOnlyList<StatusEffect> ActiveEffects => activeEffects;
 
     private CharacterAttack[] attacks;
     public CharacterAttack[] Attacks => attacks;
@@ -189,7 +193,7 @@ public class Character : MonoBehaviour
         threatTable[source] += amount;
     }
 
-    public void Damage(int amount)
+    public void Damage(int amount, bool hurt = true)
     {
         currentHealth -= amount;
         currentHealth = Math.Max(currentHealth, 0);
@@ -199,12 +203,80 @@ public class Character : MonoBehaviour
             AddResource(2 * (int)(amount * 100f / MaxHealth));
         }
 
-        animator.SetTrigger("Hurt");
+        if (hurt)
+        {
+            animator.SetTrigger("Hurt");
+        }
     }
 
     public void Heal(int amount)
     {
         currentHealth += amount;
         currentHealth = Math.Min(currentHealth, MaxHealth);
+    }
+
+    private void Update()
+    {
+        UpdateStatusEffects();
+    }
+
+    private void UpdateStatusEffects()
+    {
+        for (int i = activeEffects.Count - 1; i >= 0; i--)
+        {
+            var effect = activeEffects[i];
+            effect.UpdateEffect();
+
+            if (effect.IsExpired)
+            {
+                effect.OnRemove();
+                Destroy(effect.gameObject);
+                activeEffects.RemoveAt(i);
+            }
+        }
+    }
+
+    public void ApplyStatusEffect(StatusEffect effect, Character source)
+    {
+        var existingEffect = activeEffects.Find(e => e.EffectName == effect.EffectName);
+        if (existingEffect)
+        {
+            if (existingEffect.IsStackable)
+                existingEffect.AddStack();
+            existingEffect.RefreshDuration();
+            effect.OnApply();
+            return;
+        }
+
+        // Check for immunities or resistances here if needed
+        effect.Initialize(this, source);
+        effect.OnApply();
+        activeEffects.Add(effect);
+    }
+
+    public bool HasStatusEffect(StatusEffectType type)
+    {
+        return activeEffects.Exists(effect => effect.EffectType == type);
+    }
+
+    public void RemoveStatusEffect(StatusEffectType type)
+    {
+        var effect = activeEffects.Find(e => e.EffectType == type);
+        if (effect != null)
+        {
+            effect.OnRemove();
+            activeEffects.Remove(effect);
+            Destroy(effect.gameObject);
+        }
+    }
+
+    public void RemoveAllStatusEffects()
+    {
+        foreach (var effect in activeEffects)
+        {
+            effect.OnRemove();
+            Destroy(effect.gameObject);
+        }
+        activeEffects.Clear();
     }
 }

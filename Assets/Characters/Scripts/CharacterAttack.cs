@@ -41,6 +41,10 @@ public abstract class CharacterAttack : MonoBehaviour
     public float ThreatMultiplier => threatMultiplier;
 
     [SerializeField]
+    protected StatusEffect statusEffectPrefab;
+    public StatusEffect StatusEffectPrefab => statusEffectPrefab;
+
+    [SerializeField]
     protected float animationDelay = 0.2f;
 
     [SerializeField]
@@ -91,6 +95,12 @@ public abstract class CharacterAttack : MonoBehaviour
         if (attacker.ResourceType == ResourceType.Rage)
         {
             attacker.AddResource(5 * (int)(attack.Damage * 100f / attacker.MaxHealth));
+        }
+
+        if (attack.StatusEffectPrefab != null)
+        {
+            StatusEffect statusEffect = Instantiate(attack.StatusEffectPrefab, target.transform);
+            target.ApplyStatusEffect(statusEffect, attacker);
         }
 
         FloatingTextManager.Instance.SpawnDamage(attack.Damage, target.transform.position);

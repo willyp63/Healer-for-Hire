@@ -165,6 +165,7 @@ public class CharacterManager : Singleton<CharacterManager>
                     character.MaxResource,
                     character.ResourceType
                 );
+                unitFrame.UpdateStatusEffects(character.ActiveEffects);
             }
         }
     }

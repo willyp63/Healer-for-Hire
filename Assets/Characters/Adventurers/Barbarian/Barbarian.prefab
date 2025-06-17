@@ -173,6 +173,7 @@ MonoBehaviour:
   damage: 50
   cooldown: 3
   threatMultiplier: 4
+  statusEffectPrefab: {fileID: 7074106375902350592, guid: 24bf9a563845e604b806ca186a352f93, type: 3}
   animationDelay: 0.167
   attackAnimationTrigger: Attack
   forwardDuration: 0.167

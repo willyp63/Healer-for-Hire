@@ -21,6 +21,15 @@ public class UnitFrameUI : MonoBehaviour
     [SerializeField]
     private TextMeshProUGUI resourceText;
 
+    [SerializeField]
+    private Transform statusEffectsContainer;
+
+    [SerializeField]
+    private StatusEffectUI statusEffectPrefab;
+
+    private Dictionary<StatusEffect, StatusEffectUI> activeStatusEffects =
+        new Dictionary<StatusEffect, StatusEffectUI>();
+
     public void SetHealth(int currentHealth, int maxHealth)
     {
         if (healthText != null)
@@ -77,6 +86,54 @@ public class UnitFrameUI : MonoBehaviour
         if (portraitImage != null)
         {
             portraitImage.sprite = portraitSprite;
+        }
+    }
+
+    public void UpdateStatusEffects(IReadOnlyList<StatusEffect> statusEffects)
+    {
+        // Create a list to track which status effects should be removed
+        List<StatusEffect> statusEffectsToRemove = new List<StatusEffect>(activeStatusEffects.Keys);
+
+        // Update or create status effects
+        foreach (var statusEffect in statusEffects)
+        {
+            statusEffectsToRemove.Remove(statusEffect);
+
+            if (activeStatusEffects.TryGetValue(statusEffect, out StatusEffectUI statusEffectUI))
+            {
+                // Update existing status effect
+                statusEffectUI.UpdateStatusEffect(
+                    statusEffect.EffectIcon,
+                    statusEffect.TimeRemaining,
+                    statusEffect.Duration,
+                    statusEffect.CurrentStacks
+                );
+            }
+            else
+            {
+                // Create new status effect
+                StatusEffectUI newStatusEffectUI = Instantiate(
+                    statusEffectPrefab,
+                    statusEffectsContainer
+                );
+                newStatusEffectUI.UpdateStatusEffect(
+                    statusEffect.EffectIcon,
+                    statusEffect.TimeRemaining,
+                    statusEffect.Duration,
+                    statusEffect.CurrentStacks
+                );
+                activeStatusEffects[statusEffect] = newStatusEffectUI;
+            }
+        }
+
+        // Remove status effects that are no longer active
+        foreach (var type in statusEffectsToRemove)
+        {
+            if (activeStatusEffects.TryGetValue(type, out StatusEffectUI statusEffectUI))
+            {
+                Destroy(statusEffectUI.gameObject);
+                activeStatusEffects.Remove(type);
+            }
         }
     }
 }
