@@ -136,7 +136,7 @@ MonoBehaviour:
   enemyPowerLevel: 1
   role: 1
   intelligence: 0
-  maxHealth: 2000
+  maxHealth: 20000
   maxResource: 100
   startingResource: 0
   resourceRegen: 0

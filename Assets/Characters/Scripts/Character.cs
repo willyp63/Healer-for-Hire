@@ -135,6 +135,12 @@ public class Character : MonoBehaviour
         if (attack == null)
             return;
 
+        var tauntEffect = activeEffects.Find(e => e.EffectType == StatusEffectType.Taunt);
+        if (tauntEffect != null)
+        {
+            target = tauntEffect.Source;
+        }
+
         attack.Attack(target);
         lastActionTime = Time.time;
     }
@@ -193,8 +199,26 @@ public class Character : MonoBehaviour
         threatTable[source] += amount;
     }
 
+    public void SetThreat(Character source, float amount)
+    {
+        threatTable[source] = amount;
+    }
+
     public void Damage(int amount, bool hurt = true)
     {
+        // Calculate total damage reduction from all active effects
+        float totalReduction = 1f;
+        foreach (var effect in activeEffects)
+        {
+            if (effect.EffectType == StatusEffectType.DamageReduction)
+            {
+                totalReduction *= 1f - effect.Value;
+            }
+        }
+
+        // Apply damage reduction
+        amount = Mathf.RoundToInt(amount * totalReduction);
+
         currentHealth -= amount;
         currentHealth = Math.Max(currentHealth, 0);
 
@@ -243,8 +267,8 @@ public class Character : MonoBehaviour
         {
             if (existingEffect.IsStackable)
                 existingEffect.AddStack();
-            existingEffect.RefreshDuration();
-            effect.OnApply();
+            existingEffect.Initialize(this, source);
+            existingEffect.OnApply();
             return;
         }
 

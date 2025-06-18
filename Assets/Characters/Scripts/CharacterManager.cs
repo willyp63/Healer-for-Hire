@@ -24,6 +24,9 @@ public class CharacterManager : Singleton<CharacterManager>
     [SerializeField]
     private List<UnitFrameUI> enemyFrames;
 
+    [SerializeField]
+    private ThreatVisualizer threatVisualizer;
+
     private Character[] activePlayerCharacters;
     private Character[] activeEnemyCharacters;
 
@@ -253,5 +256,21 @@ public class CharacterManager : Singleton<CharacterManager>
         }
 
         return null;
+    }
+
+    public void ToggleThreatVisualization(bool visible)
+    {
+        if (threatVisualizer != null)
+        {
+            threatVisualizer.SetLineVisibility(visible);
+        }
+    }
+
+    public void ClearThreatVisualization()
+    {
+        if (threatVisualizer != null)
+        {
+            threatVisualizer.ClearAllLines();
+        }
     }
 }

@@ -15,6 +15,23 @@ public enum AttackTargetingType
     Self, // Always target self
 }
 
+public enum ConditionType
+{
+    NumEnemies,
+    NumEnemiesWithThreat,
+    NumEnemiesWithoutThreat,
+    Health,
+    Resource,
+}
+
+public enum OperatorType
+{
+    GreaterThan,
+    LessThan,
+    EqualTo,
+    NotEqualTo,
+}
+
 [System.Serializable]
 public struct TargetingWeight
 {
@@ -22,8 +39,26 @@ public struct TargetingWeight
     public float weight;
 }
 
+[System.Serializable]
+public struct PriorityCondition
+{
+    public ConditionType conditionType;
+    public OperatorType operatorType;
+    public float value;
+
+    public float priority;
+}
+
 public abstract class CharacterAttack : MonoBehaviour
 {
+    [SerializeField]
+    protected float priority = 0;
+    public float Priority => priority;
+
+    [SerializeField]
+    protected PriorityCondition[] priorityConditions;
+    public PriorityCondition[] PriorityConditions => priorityConditions;
+
     [SerializeField]
     protected TargetingWeight[] targetingWeights;
     public TargetingWeight[] TargetingWeights => targetingWeights;
@@ -61,11 +96,6 @@ public abstract class CharacterAttack : MonoBehaviour
         animator = GetComponent<Animator>();
     }
 
-    public virtual float GetAttackEffectiveness()
-    {
-        return 0.5f;
-    }
-
     public virtual void Attack(Character target)
     {
         lastAttackTime = Time.time;
@@ -87,14 +117,19 @@ public abstract class CharacterAttack : MonoBehaviour
         CharacterAttack attack
     )
     {
-        target.Damage(attack.Damage);
-
-        float threatGenerated = attack.Damage * attack.ThreatMultiplier;
-        target.AddThreat(attacker, threatGenerated);
-
-        if (attacker.ResourceType == ResourceType.Rage)
+        if (attack.Damage > 0)
         {
-            attacker.AddResource(5 * (int)(attack.Damage * 100f / attacker.MaxHealth));
+            target.Damage(attack.Damage);
+
+            float threatGenerated = attack.Damage * attack.ThreatMultiplier;
+            target.AddThreat(attacker, threatGenerated);
+
+            if (attacker.ResourceType == ResourceType.Rage)
+            {
+                attacker.AddResource(5 * (int)(attack.Damage * 100f / attacker.MaxHealth));
+            }
+
+            FloatingTextManager.Instance.SpawnDamage(attack.Damage, target.transform.position);
         }
 
         if (attack.StatusEffectPrefab != null)
@@ -102,7 +137,5 @@ public abstract class CharacterAttack : MonoBehaviour
             StatusEffect statusEffect = Instantiate(attack.StatusEffectPrefab, target.transform);
             target.ApplyStatusEffect(statusEffect, attacker);
         }
-
-        FloatingTextManager.Instance.SpawnDamage(attack.Damage, target.transform.position);
     }
 }

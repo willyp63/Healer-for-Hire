@@ -1751,7 +1751,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 686247897
   m_SortingLayer: -1
-  m_SortingOrder: 0
+  m_SortingOrder: -999
   m_Sprite: {fileID: 21300000, guid: ead5189d006b9bc40a6ac3c477521ccb, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -4630,6 +4630,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1719569919}
   - component: {fileID: 1719569918}
+  - component: {fileID: 1719569920}
   m_Layer: 0
   m_Name: Character Manager
   m_TagString: Untagged
@@ -4651,7 +4652,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerCharacters:
   - {fileID: 5633733767765297547, guid: e6d3bb09693c11e40b09b5ee49304a84, type: 3}
-  - {fileID: 5633733767765297547, guid: 386316b8872debc4095b5d5052493823, type: 3}
+  - {fileID: 2678133424579707393, guid: 386316b8872debc4095b5d5052493823, type: 3}
   - {fileID: 5633733767765297547, guid: e6d3bb09693c11e40b09b5ee49304a84, type: 3}
   enemyCharacters:
   - {fileID: 5633733767765297547, guid: 1724f26f72bdd2e4890ebd370f8b4ac0, type: 3}
@@ -4682,6 +4683,7 @@ MonoBehaviour:
   - {fileID: 416586250}
   - {fileID: 1946858923}
   - {fileID: 660358118}
+  threatVisualizer: {fileID: 1719569920}
 --- !u!4 &1719569919
 Transform:
   m_ObjectHideFlags: 0
@@ -4697,6 +4699,26 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 9
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1719569920
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1719569917}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 16c071098e44f464fa35d44c268e6269, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lineMaterial: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
+  highThreatColor: {r: 1, g: 0, b: 0, a: 1}
+  lowThreatColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  lineWidth: 0.05
+  lineOpacity: 0.3
+  lineOffset: -0.125
+  animateLines: 1
+  animationSpeed: 1
 --- !u!1 &1749412082
 GameObject:
   m_ObjectHideFlags: 0

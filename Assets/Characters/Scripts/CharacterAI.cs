@@ -16,9 +16,30 @@ public class CharacterAI : MonoBehaviour
 
     public (CharacterAttack attack, Character target) MakeDecision()
     {
+        var attackDistribution = GetAttackDistribution();
+
+        var highestPriority = 0f;
+        foreach (var attack in attackDistribution)
+            if (attack.Value > highestPriority)
+                highestPriority = attack.Value;
+
+        var shouldDoNothingDistribution = new Dictionary<bool, float>()
+        {
+            { true, 1f - highestPriority },
+            { false, highestPriority },
+        };
+
+        var shouldDoNothing = DistributionUtils.SampleDistribution(
+            shouldDoNothingDistribution,
+            Mathf.Clamp((1f - character.Intelligence) * 0.05f, 0.005f, 0.05f)
+        );
+
+        if (shouldDoNothing)
+            return (null, null);
+
         var bestAttack = DistributionUtils.SampleDistribution(
-            GetAttackDistribution(),
-            Mathf.Max(1f - character.Intelligence, 0.1f)
+            attackDistribution,
+            Mathf.Max(1f - character.Intelligence, MIN_TEMPERATURE)
         );
 
         if (bestAttack == null)
@@ -31,7 +52,6 @@ public class CharacterAI : MonoBehaviour
         return (bestAttack, target);
     }
 
-    // TODO: factor in resource management
     private Dictionary<CharacterAttack, float> GetAttackDistribution()
     {
         Dictionary<CharacterAttack, float> attackDistribution = new();
@@ -41,10 +61,75 @@ public class CharacterAI : MonoBehaviour
             if (attack.IsOnCooldown())
                 continue;
 
-            attackDistribution[attack] = attack.GetAttackEffectiveness();
+            attackDistribution[attack] = GetAttackPriority(attack);
         }
 
         return attackDistribution;
+    }
+
+    private float GetAttackPriority(CharacterAttack attack)
+    {
+        float priority = attack.Priority;
+
+        foreach (var condition in attack.PriorityConditions)
+        {
+            if (IsConditionMet(condition))
+                priority += condition.priority;
+        }
+
+        return Mathf.Clamp(priority, 0f, 1f);
+    }
+
+    private bool IsConditionMet(PriorityCondition condition)
+    {
+        float value = GetConditionValue(condition);
+        switch (condition.operatorType)
+        {
+            case OperatorType.GreaterThan:
+                return value > condition.value;
+            case OperatorType.LessThan:
+                return value < condition.value;
+            case OperatorType.EqualTo:
+                return value == condition.value;
+            case OperatorType.NotEqualTo:
+                return value != condition.value;
+            default:
+                return false;
+        }
+    }
+
+    private float GetConditionValue(PriorityCondition condition)
+    {
+        switch (condition.conditionType)
+        {
+            case ConditionType.NumEnemies:
+                var enemies = CharacterManager.Instance.GetActiveEnemyCharacters();
+                int enemiyCount = 0;
+                foreach (var enemy in enemies)
+                    if (enemy != null)
+                        enemiyCount++;
+                return enemiyCount;
+            case ConditionType.NumEnemiesWithThreat:
+                var enemiesWithHighestThreat = CharacterManager.Instance.GetActiveEnemyCharacters();
+                int highThreatCount = 0;
+                foreach (var enemy in enemiesWithHighestThreat)
+                    if (enemy != null && enemy.GetHighestThreatTarget() == character)
+                        highThreatCount++;
+                return highThreatCount;
+            case ConditionType.NumEnemiesWithoutThreat:
+                var enemiesWithoutThreat = CharacterManager.Instance.GetActiveEnemyCharacters();
+                int lowThreatCount = 0;
+                foreach (var enemy in enemiesWithoutThreat)
+                    if (enemy != null && enemy.GetHighestThreatTarget() != character)
+                        lowThreatCount++;
+                return lowThreatCount;
+            case ConditionType.Health:
+                return (float)character.CurrentHealth / character.MaxHealth;
+            case ConditionType.Resource:
+                return (float)character.CurrentResource / character.MaxResource;
+            default:
+                return 0f;
+        }
     }
 
     private Character GetTarget(CharacterAttack attack)
@@ -52,9 +137,17 @@ public class CharacterAI : MonoBehaviour
         if (character.IsEnemy)
             return GetEnemyTarget();
 
-        var closestDistribution = GetClosestTargetDistribution();
-        if (closestDistribution.Count == 0)
-            return null;
+        // Early return if any targeting weight is All or Self
+        foreach (var weight in attack.TargetingWeights)
+        {
+            if (
+                weight.targetingType == AttackTargetingType.All
+                || weight.targetingType == AttackTargetingType.Self
+            )
+            {
+                return character;
+            }
+        }
 
         // Combine all of the AI targeting distributions
         var aiDistribution = DistributionUtils.CombineDistributions(
@@ -68,22 +161,10 @@ public class CharacterAI : MonoBehaviour
             Array.ConvertAll(attack.TargetingWeights, w => w.weight)
         );
 
-        // Combine AI targeting distribution with closest target distribution.
-        // The higher the intelligence, the more weight is given to the AI targeting distribution
-        var combinedDistribution = DistributionUtils.CombineDistributions(
-            new Dictionary<Character, float>[]
-            {
-                DistributionUtils.NormalizeDistribution(aiDistribution),
-                closestDistribution,
-            },
-            new float[]
-            {
-                Mathf.Max(character.Intelligence, 1f - MIN_TEMPERATURE),
-                Mathf.Max(1f - character.Intelligence, MIN_TEMPERATURE),
-            }
+        return DistributionUtils.SampleDistribution(
+            aiDistribution,
+            Mathf.Max((1f - character.Intelligence) * 5f, MIN_TEMPERATURE)
         );
-
-        return DistributionUtils.SampleDistribution(combinedDistribution, MIN_TEMPERATURE);
     }
 
     private Dictionary<Character, float> GetTargetDistribution(
@@ -156,8 +237,6 @@ public class CharacterAI : MonoBehaviour
             if (enemy == null)
                 continue;
 
-            float threatValue = 1f;
-
             // Get current threat this tank has on this enemy
             float currentThreat = enemy.ThreatTable.ContainsKey(character)
                 ? enemy.ThreatTable[character]
@@ -165,25 +244,33 @@ public class CharacterAI : MonoBehaviour
 
             // Get the highest threat on this enemy from any character
             float highestThreat = 0f;
+            float secondHighestThreat = 0f;
             foreach (var threatEntry in enemy.ThreatTable.Values)
             {
                 if (threatEntry > highestThreat)
+                {
+                    secondHighestThreat = highestThreat;
                     highestThreat = threatEntry;
+                }
+                else if (threatEntry > secondHighestThreat)
+                {
+                    secondHighestThreat = threatEntry;
+                }
             }
 
-            // If we're not the highest threat, increase our priority
-            if (currentThreat < highestThreat)
+            float threatValue = 1f;
+
+            if (currentThreat == 0f)
             {
-                threatValue += (highestThreat - currentThreat) * 2f; // Strongly prioritize gaining threat
+                threatValue = 1f;
             }
-
-            // Add power level bonus (higher power = higher priority)
-            threatValue += enemy.EnemyPowerLevel * 0.5f;
-
-            // If we have no threat on this enemy, give it extra priority
-            if (currentThreat <= 0f)
+            else if (currentThreat < highestThreat)
             {
-                threatValue += 5f; // High priority for enemies we have no threat on
+                threatValue = 5f;
+            }
+            else
+            {
+                threatValue = secondHighestThreat / currentThreat;
             }
 
             distribution[enemy] = threatValue;
@@ -206,8 +293,6 @@ public class CharacterAI : MonoBehaviour
             if (enemy == null)
                 continue;
 
-            float threatValue = 1f;
-
             // Get current threat this damage dealer has on this enemy
             float currentThreat = enemy.ThreatTable.ContainsKey(character)
                 ? enemy.ThreatTable[character]
@@ -218,20 +303,26 @@ public class CharacterAI : MonoBehaviour
             foreach (var threatEntry in enemy.ThreatTable.Values)
             {
                 if (threatEntry > highestThreat)
+                {
                     highestThreat = threatEntry;
+                }
             }
 
-            // Add power level bonus (lower power = Higher priority for damage dealers)
-            threatValue += 5f / Mathf.Max(enemy.EnemyPowerLevel, 1f);
+            float threatValue = 1f;
 
-            // If we're the highest threat, heavily discourage attacking this target
-            if (currentThreat >= highestThreat && highestThreat > 0f)
+            // If no one has threat on this enemy, then AVOID this enemy (high risk of pulling aggro)
+            // If we are the highest threat on this enemy, then AVOID this enemy (high risk of pulling aggro)
+            if (highestThreat == 0f || currentThreat >= highestThreat)
             {
-                threatValue *= 0.1f; // 90% reduction in priority
+                threatValue = 0f;
             }
-
-            // Ensure minimum threat value
-            threatValue = Mathf.Max(threatValue, 0.1f);
+            // If we are not the highest threat on this enemy, then prioritize by how far we are from the highest threat
+            else if (currentThreat < highestThreat)
+            {
+                // The more gap between our threat and the highest threat, the safer it is to attack
+                float threatGap = highestThreat - currentThreat;
+                threatValue = threatGap / highestThreat; // Normalize by highest threat
+            }
 
             distribution[enemy] = threatValue;
         }

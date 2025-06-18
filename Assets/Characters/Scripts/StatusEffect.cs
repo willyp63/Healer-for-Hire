@@ -7,13 +7,11 @@ public enum StatusEffectType
     Stun,
     Taunt,
     Bleed,
-    Slow,
 
     // Buffs
-    ShieldWall,
-    ManaRegen,
+    DamageReduction,
+    ResourceRegen,
     HealingOverTime,
-    Shield,
 }
 
 public class StatusEffect : MonoBehaviour
@@ -37,6 +35,7 @@ public class StatusEffect : MonoBehaviour
 
     [SerializeField]
     protected float value; // Generic value that can represent damage, healing, etc.
+    public float Value => value;
 
     [SerializeField]
     protected bool isStackable;
@@ -47,7 +46,11 @@ public class StatusEffect : MonoBehaviour
     public int MaxStacks => maxStacks;
 
     protected Character target;
+    public Character Target => target;
+
     protected Character source;
+    public Character Source => source;
+
     protected float timeRemaining;
     protected float nextTickTime;
 
@@ -98,10 +101,5 @@ public class StatusEffect : MonoBehaviour
     {
         currentStacks += amount;
         currentStacks = Math.Min(currentStacks, maxStacks);
-    }
-
-    public virtual void RefreshDuration()
-    {
-        timeRemaining = duration;
     }
 }
