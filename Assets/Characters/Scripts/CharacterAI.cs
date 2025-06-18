@@ -10,21 +10,19 @@ public class CharacterAI : MonoBehaviour
 
     private Character character;
 
-    private const float MIN_TEMPERATURE = 0.05f;
-
     private void Start()
     {
         character = GetComponent<Character>();
     }
 
-    public (CharacterAttack attack, Character target) MakeDecision()
+    public CharacterAttack ChooseAttack()
     {
         if (isDebugMode)
         {
             Debug.Log("\n\n");
             Debug.Log("\n\n");
             Debug.Log("\n\n");
-            Debug.Log("Making Decision...");
+            Debug.Log("Choosing Attack...");
         }
 
         var attackDistribution = GetAttackDistribution();
@@ -35,77 +33,59 @@ public class CharacterAI : MonoBehaviour
             DistributionUtils.PrintDistribution(attackDistribution);
         }
 
-        var highestPriority = 0f;
-        foreach (var attack in attackDistribution)
-            if (attack.Value > highestPriority)
-                highestPriority = attack.Value;
-
-        var shouldDoNothingDistribution = new Dictionary<bool, float>()
-        {
-            { true, 1f - highestPriority },
-            { false, highestPriority },
-        };
+        // Adjust attack distribution based on cooldowns and resource costs
+        var adjustedAttackDistribution = AdjustAttackDistribution(attackDistribution);
 
         if (isDebugMode)
         {
-            Debug.Log("Do Nothing Distribution:");
-            DistributionUtils.PrintDistribution(shouldDoNothingDistribution);
-        }
-
-        var shouldDoNothing = DistributionUtils.SampleDistribution(
-            shouldDoNothingDistribution,
-            character.AITemperature * 0.1f // lower temp cause we need to keep doing nothing (TODO: better system)
-        );
-
-        if (shouldDoNothing)
-        {
-            if (isDebugMode)
-            {
-                Debug.Log("Doing Nothing");
-                GameManager.Instance.PauseGame();
-            }
-
-            return (null, null);
+            Debug.Log("Adjusted Attack Distribution:");
+            DistributionUtils.PrintDistribution(adjustedAttackDistribution);
         }
 
         var bestAttack = DistributionUtils.SampleDistribution(
-            attackDistribution,
+            adjustedAttackDistribution,
             character.AITemperature
         );
 
-        if (bestAttack == null)
-        {
-            if (isDebugMode)
-            {
-                Debug.Log("No Attack Found");
-                GameManager.Instance.PauseGame();
-            }
+        return bestAttack;
+    }
 
-            return (null, null);
+    public Character ChooseTarget(CharacterAttack attack)
+    {
+        if (character.IsEnemy)
+            return GetEnemyTarget();
+
+        // Early return if any targeting weight is All or Self
+        foreach (var weight in attack.TargetingWeights)
+        {
+            if (
+                weight.targetingType == AttackTargetingType.All
+                || weight.targetingType == AttackTargetingType.Self
+            )
+            {
+                return character;
+            }
         }
 
-        var target = GetTarget(bestAttack);
-
-        if (target == null)
-        {
-            if (isDebugMode)
-            {
-                Debug.Log("No Target Found");
-                GameManager.Instance.PauseGame();
-            }
-
-            return (null, null);
-        }
+        // Combine all of the AI targeting distributions
+        var aiDistribution = DistributionUtils.CombineDistributions(
+            Array.ConvertAll(
+                attack.TargetingWeights,
+                w =>
+                    DistributionUtils.NormalizeDistribution(
+                        GetTargetDistribution(attack, w.targetingType)
+                    )
+            ),
+            Array.ConvertAll(attack.TargetingWeights, w => w.weight)
+        );
 
         if (isDebugMode)
         {
-            Debug.Log("Decision Made!");
-            Debug.Log("Target: " + target);
-            Debug.Log("Attack: " + bestAttack);
-            GameManager.Instance.PauseGame();
+            Debug.Log("AI Distribution:");
+            DistributionUtils.PrintDistribution(aiDistribution);
         }
 
-        return (bestAttack, target);
+        return DistributionUtils.SampleDistribution(aiDistribution, character.AITemperature);
     }
 
     private Dictionary<CharacterAttack, float> GetAttackDistribution()
@@ -114,9 +94,6 @@ public class CharacterAI : MonoBehaviour
 
         foreach (var attack in character.Attacks)
         {
-            if (attack.IsOnCooldown())
-                continue;
-
             attackDistribution[attack] = GetAttackPriority(attack);
         }
 
@@ -193,44 +170,6 @@ public class CharacterAI : MonoBehaviour
             default:
                 return 0f;
         }
-    }
-
-    private Character GetTarget(CharacterAttack attack)
-    {
-        if (character.IsEnemy)
-            return GetEnemyTarget();
-
-        // Early return if any targeting weight is All or Self
-        foreach (var weight in attack.TargetingWeights)
-        {
-            if (
-                weight.targetingType == AttackTargetingType.All
-                || weight.targetingType == AttackTargetingType.Self
-            )
-            {
-                return character;
-            }
-        }
-
-        // Combine all of the AI targeting distributions
-        var aiDistribution = DistributionUtils.CombineDistributions(
-            Array.ConvertAll(
-                attack.TargetingWeights,
-                w =>
-                    DistributionUtils.NormalizeDistribution(
-                        GetTargetDistribution(attack, w.targetingType)
-                    )
-            ),
-            Array.ConvertAll(attack.TargetingWeights, w => w.weight)
-        );
-
-        if (isDebugMode)
-        {
-            Debug.Log("AI Distribution:");
-            DistributionUtils.PrintDistribution(aiDistribution);
-        }
-
-        return DistributionUtils.SampleDistribution(aiDistribution, character.AITemperature);
     }
 
     private Dictionary<Character, float> GetTargetDistribution(
@@ -490,5 +429,78 @@ public class CharacterAI : MonoBehaviour
     {
         // For "Self" targeting type, we only target ourselves
         return new Dictionary<Character, float>() { { character, 1f } };
+    }
+
+    private Dictionary<CharacterAttack, float> AdjustAttackDistribution(
+        Dictionary<CharacterAttack, float> baseDistribution
+    )
+    {
+        var adjustedDistribution = new Dictionary<CharacterAttack, float>();
+
+        // Calculate time-to-ready for each attack
+        var timeToReady = new Dictionary<CharacterAttack, float>();
+        var resourceTimeToReady = new Dictionary<CharacterAttack, float>();
+
+        foreach (var attack in baseDistribution.Keys)
+        {
+            // Calculate cooldown time remaining
+            float cooldownTimeRemaining = Mathf.Max(
+                0f,
+                attack.Cooldown - (Time.time - attack.LastAttackTime)
+            );
+
+            // Calculate resource time remaining
+            float resourceTimeRemaining = 0f;
+            if (attack.ResourceCost > character.CurrentResource)
+            {
+                float resourceNeeded = attack.ResourceCost - character.CurrentResource;
+                resourceTimeRemaining =
+                    resourceNeeded / character.ResourceRegen * character.ResourceRegenInterval;
+            }
+
+            timeToReady[attack] = Mathf.Max(cooldownTimeRemaining, resourceTimeRemaining);
+            resourceTimeToReady[attack] = resourceTimeRemaining;
+        }
+
+        // Find the highest priority attack that can't be used due to resources
+        float highestBlockedPriority = 0f;
+        foreach (var kvp in baseDistribution)
+        {
+            var attack = kvp.Key;
+            var priority = kvp.Value;
+
+            if (resourceTimeToReady[attack] > 0f && priority > highestBlockedPriority)
+            {
+                highestBlockedPriority = priority;
+            }
+        }
+
+        // Apply adjustments to each attack
+        foreach (var kvp in baseDistribution)
+        {
+            var attack = kvp.Key;
+            var basePriority = kvp.Value;
+            var timeUntilReady = timeToReady[attack];
+
+            // Calculate readiness penalty using a continuous function
+            // Attacks ready now or in 0.5s get full priority, attacks ready in 2-3 seconds get heavily penalized
+            // https://www.wolframalpha.com/input?i=e%5E%28%28x+-+0.5%29+*+-1.1%29+from+0+to+3
+            float readinessMultiplier = Mathf.Min(1f, Mathf.Exp(-1.1f * (timeUntilReady - 0.5f)));
+
+            // Calculate resource penalty if we have higher priority attacks that are resource-blocked
+            float resourcePenalty = 1f;
+            if (attack.ResourceCost > 0 && highestBlockedPriority > basePriority)
+            {
+                // If this attack uses resources and there's a higher priority attack that's resource-blocked,
+                // penalize this attack proportionally to how much higher the blocked priority is
+                float priorityGap = highestBlockedPriority - basePriority;
+                resourcePenalty = Mathf.Max(0.1f, 1f - priorityGap * 0.5f); // Reduce penalty as gap increases
+            }
+
+            float adjustedPriority = basePriority * readinessMultiplier * resourcePenalty;
+            adjustedDistribution[attack] = adjustedPriority;
+        }
+
+        return adjustedDistribution;
     }
 }

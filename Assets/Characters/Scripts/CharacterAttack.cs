@@ -53,6 +53,10 @@ public struct PriorityCondition
 public abstract class CharacterAttack : MonoBehaviour
 {
     [SerializeField]
+    protected string attackName = "Attack";
+    public string AttackName => attackName;
+
+    [SerializeField]
     protected float lowAIPriority = 0;
     public float LowAIPriority => lowAIPriority;
 
@@ -67,6 +71,10 @@ public abstract class CharacterAttack : MonoBehaviour
     [SerializeField]
     protected TargetingWeight[] targetingWeights;
     public TargetingWeight[] TargetingWeights => targetingWeights;
+
+    [SerializeField]
+    protected int resourceCost = 0;
+    public int ResourceCost => resourceCost;
 
     [SerializeField]
     protected int damage = 0;
@@ -91,6 +99,7 @@ public abstract class CharacterAttack : MonoBehaviour
     protected string attackAnimationTrigger = "Attack";
 
     protected float lastAttackTime = Mathf.NegativeInfinity;
+    public float LastAttackTime => lastAttackTime;
 
     protected Animator animator;
     protected Character character;

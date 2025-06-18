@@ -58,18 +58,26 @@ public class Character : MonoBehaviour
     public int ResourceRegen => resourceRegen;
 
     [SerializeField]
+    private float resourceRegenInterval = 1f;
+    public float ResourceRegenInterval => resourceRegenInterval;
+
+    [SerializeField]
     private ResourceType resourceType = ResourceType.Mana;
     public ResourceType ResourceType => resourceType;
 
     private int currentResource = 0;
     public int CurrentResource => currentResource;
 
+    private float lastResourceUpdateTime = Mathf.NegativeInfinity;
+
     private int currentHealth = 0;
     public int CurrentHealth => currentHealth;
 
-    private const float globalCooldown = 1f;
+    private bool isDead = false;
 
-    private float lastActionTime = Mathf.NegativeInfinity;
+    private const float GLOBAL_COOLDOWN = 1f;
+
+    private float lastAttackTime = Mathf.NegativeInfinity;
 
     private Dictionary<Character, float> threatTable = new();
     public Dictionary<Character, float> ThreatTable => threatTable;
@@ -79,6 +87,10 @@ public class Character : MonoBehaviour
 
     private CharacterAttack[] attacks;
     public CharacterAttack[] Attacks => attacks;
+
+    private const float DECISION_INTERVAL = 1.0f;
+    private float lastDecisionTime = Mathf.NegativeInfinity;
+    private CharacterAttack currentAttack;
 
     private CharacterAI characterAI;
     private Animator animator;
@@ -90,55 +102,86 @@ public class Character : MonoBehaviour
         attacks = GetComponents<CharacterAttack>();
         currentHealth = MaxHealth;
         currentResource = StartingResource;
-        StartCoroutine(BattleLoop());
-        StartCoroutine(ResourceUpdate());
     }
 
-    private IEnumerator BattleLoop()
+    private void Update()
     {
-        yield return new WaitForSeconds(0.5f);
+        if (currentHealth <= 0)
+            return;
 
-        while (currentHealth > 0)
-        {
-            TryToAttack();
-            yield return new WaitForSeconds(0.5f);
-        }
+        UpdateStatusEffects();
+        UpdateResource();
+        UpdateDecision();
 
-        // Character died
-        animator.SetTrigger("Die");
-        yield return new WaitForSeconds(2f);
-        CharacterManager.Instance.RemoveCharacter(this);
+        TryToAttack();
     }
 
-    private IEnumerator ResourceUpdate()
+    private void UpdateResource()
     {
-        while (currentHealth > 0)
-        {
-            UpdateResource();
-            yield return new WaitForSeconds(1f);
-        }
+        // Update resource every ResourceRegenInterval seconds
+        if (Time.time - lastResourceUpdateTime <= ResourceRegenInterval)
+            return;
+
+        AddResource(resourceRegen);
+        lastResourceUpdateTime = Time.time;
+    }
+
+    private void UpdateDecision()
+    {
+        // Update decision every DECISION_INTERVAL seconds
+        if (Time.time - lastDecisionTime <= DECISION_INTERVAL)
+            return;
+
+        MakeAttackDecision();
     }
 
     private void TryToAttack()
     {
-        if (Time.time - lastActionTime < globalCooldown)
+        // Check if we can attack
+        if (
+            Time.time - lastAttackTime < GLOBAL_COOLDOWN
+            || currentAttack == null
+            || currentAttack.IsOnCooldown()
+            || currentAttack.ResourceCost > currentResource
+        )
             return;
 
-        // TODO: implement random decision making when there is no AI
-        if (characterAI == null)
+        // Choose a target
+        var target = characterAI.ChooseTarget(currentAttack);
+        if (target == null)
             return;
 
-        var (attack, target) = characterAI.MakeDecision();
+        // Consume resource
+        ConsumeResource(currentAttack.ResourceCost);
 
-        if (attack == null)
-            return;
+        // Attack
+        currentAttack.Attack(target);
+        lastAttackTime = Time.time;
 
-        var tauntTarget = GetTauntTarget();
-        if (tauntTarget != null)
-            target = tauntTarget;
+        // Choose a new attack
+        MakeAttackDecision();
+    }
 
-        attack.Attack(target);
-        lastActionTime = Time.time;
+    private void UpdateStatusEffects()
+    {
+        for (int i = activeEffects.Count - 1; i >= 0; i--)
+        {
+            var effect = activeEffects[i];
+            effect.UpdateEffect();
+
+            if (effect.IsExpired)
+            {
+                effect.OnRemove();
+                Destroy(effect.gameObject);
+                activeEffects.RemoveAt(i);
+            }
+        }
+    }
+
+    private void MakeAttackDecision()
+    {
+        currentAttack = characterAI.ChooseAttack();
+        lastDecisionTime = Time.time;
     }
 
     public void AddResource(int amount)
@@ -147,10 +190,10 @@ public class Character : MonoBehaviour
         currentResource = Math.Min(currentResource, MaxResource);
     }
 
-    private void UpdateResource()
+    public void ConsumeResource(int amount)
     {
-        currentResource += resourceRegen;
-        currentResource = Math.Min(currentResource, MaxResource);
+        currentResource -= amount;
+        currentResource = Math.Max(currentResource, 0);
     }
 
     public Character GetHighestThreatTarget()
@@ -215,33 +258,25 @@ public class Character : MonoBehaviour
         {
             animator.SetTrigger("Hurt");
         }
+
+        if (currentHealth <= 0 && !isDead)
+        {
+            isDead = true;
+            StartCoroutine(Die());
+        }
+    }
+
+    private IEnumerator Die()
+    {
+        animator.SetTrigger("Die");
+        yield return new WaitForSeconds(2f);
+        CharacterManager.Instance.RemoveCharacter(this);
     }
 
     public void Heal(int amount)
     {
         currentHealth += amount;
         currentHealth = Math.Min(currentHealth, MaxHealth);
-    }
-
-    private void Update()
-    {
-        UpdateStatusEffects();
-    }
-
-    private void UpdateStatusEffects()
-    {
-        for (int i = activeEffects.Count - 1; i >= 0; i--)
-        {
-            var effect = activeEffects[i];
-            effect.UpdateEffect();
-
-            if (effect.IsExpired)
-            {
-                effect.OnRemove();
-                Destroy(effect.gameObject);
-                activeEffects.RemoveAt(i);
-            }
-        }
     }
 
     public void ApplyStatusEffect(StatusEffect effect, Character source)
@@ -256,7 +291,6 @@ public class Character : MonoBehaviour
             return;
         }
 
-        // Check for immunities or resistances here if needed
         effect.Initialize(this, source);
         effect.OnApply();
         activeEffects.Add(effect);
@@ -288,7 +322,7 @@ public class Character : MonoBehaviour
         activeEffects.Clear();
     }
 
-    private Character GetTauntTarget()
+    public Character GetTauntTarget()
     {
         var tauntEffect = activeEffects.Find(e => e.EffectType == StatusEffectType.Taunt);
         if (tauntEffect != null)

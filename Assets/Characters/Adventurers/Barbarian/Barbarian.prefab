@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 2678133424579707393}
   - component: {fileID: 1013621958656566983}
   - component: {fileID: 2853114467676928003}
+  - component: {fileID: 1559228639623071933}
   - component: {fileID: 6171143494454277065}
   - component: {fileID: 6526589568260069699}
   - component: {fileID: 1642277420635291815}
@@ -56,10 +57,11 @@ MonoBehaviour:
   enemyPowerLevel: 0
   role: 0
   aiStrength: 1
-  maxHealth: 2000
+  maxHealth: 5000
   maxResource: 100
   startingResource: 0
   resourceRegen: 0
+  resourceRegenInterval: 1
   resourceType: 1
 --- !u!114 &1013621958656566983
 MonoBehaviour:
@@ -86,18 +88,59 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 809562efad44a9f4cb6f4ffcf9014684, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackName: Basic Attack
   lowAIPriority: 1
   highAIPriority: 1
   priorityConditions: []
   targetingWeights:
   - targetingType: 1
     weight: 1
+  resourceCost: 0
   damage: 100
   cooldown: 3
   threatMultiplier: 3.5
-  statusEffectPrefab: {fileID: 7074106375902350592, guid: 24bf9a563845e604b806ca186a352f93, type: 3}
+  statusEffectPrefab: {fileID: 0}
   animationDelay: 0.167
   attackAnimationTrigger: Attack
+  forwardDuration: 0.167
+  backwardDuration: 0.167
+  attackRange: 0.3
+--- !u!114 &1559228639623071933
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6162112231914770403}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 809562efad44a9f4cb6f4ffcf9014684, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackName: Pummel
+  lowAIPriority: 1
+  highAIPriority: 0
+  priorityConditions:
+  - conditionType: 4
+    operatorType: 0
+    value: 0.3
+    lowAIPriorityAddition: 0
+    highAIPriorityAddition: 0.1
+  - conditionType: 4
+    operatorType: 0
+    value: 0.6
+    lowAIPriorityAddition: 0
+    highAIPriorityAddition: 1
+  targetingWeights:
+  - targetingType: 1
+    weight: 1
+  resourceCost: 20
+  damage: 50
+  cooldown: 0
+  threatMultiplier: 3.5
+  statusEffectPrefab: {fileID: 0}
+  animationDelay: 0.567
+  attackAnimationTrigger: Attack Extra
   forwardDuration: 0.167
   backwardDuration: 0.167
   attackRange: 0.3
@@ -113,6 +156,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cad1be038ad35fb45bf3ace27e44b3f7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackName: Taunt
   lowAIPriority: 0.5
   highAIPriority: 0
   priorityConditions:
@@ -124,6 +168,7 @@ MonoBehaviour:
   targetingWeights:
   - targetingType: 1
     weight: 1
+  resourceCost: 10
   damage: 0
   cooldown: 12
   threatMultiplier: 1
@@ -142,6 +187,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f26fa9e311528de4685569426b4fe117, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  attackName: Shield Wall
   lowAIPriority: 0.1
   highAIPriority: 0
   priorityConditions:
@@ -158,6 +204,7 @@ MonoBehaviour:
   targetingWeights:
   - targetingType: 8
     weight: 1
+  resourceCost: 30
   damage: 0
   cooldown: 20
   threatMultiplier: 1
