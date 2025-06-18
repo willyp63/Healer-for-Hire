@@ -37,8 +37,9 @@ public class Character : MonoBehaviour
     public CharacterRole Role => role;
 
     [SerializeField]
-    private float intelligence = 0f;
-    public float Intelligence => intelligence;
+    private float aiStrength = 1f; // 0 is very dumb, 1 is very smart
+    public float AIStrength => aiStrength;
+    public float AITemperature => Mathf.Pow(10, (1f - aiStrength) * 4 - 2); // Maps 0→100, 1→0.01
 
     [SerializeField]
     private int maxHealth = 100;
@@ -66,8 +67,6 @@ public class Character : MonoBehaviour
     private int currentHealth = 0;
     public int CurrentHealth => currentHealth;
 
-    private const float threatDecayRate = 0.1f;
-    private const float threatThreshold = 50f;
     private const float globalCooldown = 1f;
 
     private float lastActionTime = Mathf.NegativeInfinity;
@@ -97,13 +96,12 @@ public class Character : MonoBehaviour
 
     private IEnumerator BattleLoop()
     {
-        yield return new WaitForSeconds(0.1f);
+        yield return new WaitForSeconds(0.5f);
 
         while (currentHealth > 0)
         {
-            UpdateThreatTable();
             TryToAttack();
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.5f);
         }
 
         // Character died
@@ -135,30 +133,12 @@ public class Character : MonoBehaviour
         if (attack == null)
             return;
 
-        var tauntEffect = activeEffects.Find(e => e.EffectType == StatusEffectType.Taunt);
-        if (tauntEffect != null)
-        {
-            target = tauntEffect.Source;
-        }
+        var tauntTarget = GetTauntTarget();
+        if (tauntTarget != null)
+            target = tauntTarget;
 
         attack.Attack(target);
         lastActionTime = Time.time;
-    }
-
-    private void UpdateThreatTable()
-    {
-        // Create a copy of the keys to safely iterate
-        var keys = new List<Character>(threatTable.Keys);
-
-        // Decay threat over time
-        foreach (var key in keys)
-        {
-            threatTable[key] -= threatDecayRate;
-            if (threatTable[key] <= 0)
-            {
-                threatTable.Remove(key);
-            }
-        }
     }
 
     public void AddResource(int amount)
@@ -175,8 +155,12 @@ public class Character : MonoBehaviour
 
     public Character GetHighestThreatTarget()
     {
+        var tauntTarget = GetTauntTarget();
+        if (tauntTarget != null)
+            return tauntTarget;
+
         Character highestThreatTarget = null;
-        float highestThreat = threatThreshold;
+        float highestThreat = 0f;
 
         foreach (var kvp in threatTable)
         {
@@ -302,5 +286,13 @@ public class Character : MonoBehaviour
             Destroy(effect.gameObject);
         }
         activeEffects.Clear();
+    }
+
+    private Character GetTauntTarget()
+    {
+        var tauntEffect = activeEffects.Find(e => e.EffectType == StatusEffectType.Taunt);
+        if (tauntEffect != null)
+            return tauntEffect.Source;
+        return null;
     }
 }

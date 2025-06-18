@@ -5,6 +5,9 @@ using UnityEngine;
 
 public class CharacterAI : MonoBehaviour
 {
+    [SerializeField]
+    private bool isDebugMode = false;
+
     private Character character;
 
     private const float MIN_TEMPERATURE = 0.05f;
@@ -16,7 +19,21 @@ public class CharacterAI : MonoBehaviour
 
     public (CharacterAttack attack, Character target) MakeDecision()
     {
+        if (isDebugMode)
+        {
+            Debug.Log("\n\n");
+            Debug.Log("\n\n");
+            Debug.Log("\n\n");
+            Debug.Log("Making Decision...");
+        }
+
         var attackDistribution = GetAttackDistribution();
+
+        if (isDebugMode)
+        {
+            Debug.Log("Attack Distribution:");
+            DistributionUtils.PrintDistribution(attackDistribution);
+        }
 
         var highestPriority = 0f;
         foreach (var attack in attackDistribution)
@@ -29,25 +46,64 @@ public class CharacterAI : MonoBehaviour
             { false, highestPriority },
         };
 
+        if (isDebugMode)
+        {
+            Debug.Log("Do Nothing Distribution:");
+            DistributionUtils.PrintDistribution(shouldDoNothingDistribution);
+        }
+
         var shouldDoNothing = DistributionUtils.SampleDistribution(
             shouldDoNothingDistribution,
-            Mathf.Clamp((1f - character.Intelligence) * 0.05f, 0.005f, 0.05f)
+            character.AITemperature * 0.1f // lower temp cause we need to keep doing nothing (TODO: better system)
         );
 
         if (shouldDoNothing)
+        {
+            if (isDebugMode)
+            {
+                Debug.Log("Doing Nothing");
+                GameManager.Instance.PauseGame();
+            }
+
             return (null, null);
+        }
 
         var bestAttack = DistributionUtils.SampleDistribution(
             attackDistribution,
-            Mathf.Max(1f - character.Intelligence, MIN_TEMPERATURE)
+            character.AITemperature
         );
 
         if (bestAttack == null)
+        {
+            if (isDebugMode)
+            {
+                Debug.Log("No Attack Found");
+                GameManager.Instance.PauseGame();
+            }
+
             return (null, null);
+        }
 
         var target = GetTarget(bestAttack);
+
         if (target == null)
+        {
+            if (isDebugMode)
+            {
+                Debug.Log("No Target Found");
+                GameManager.Instance.PauseGame();
+            }
+
             return (null, null);
+        }
+
+        if (isDebugMode)
+        {
+            Debug.Log("Decision Made!");
+            Debug.Log("Target: " + target);
+            Debug.Log("Attack: " + bestAttack);
+            GameManager.Instance.PauseGame();
+        }
 
         return (bestAttack, target);
     }
@@ -69,12 +125,19 @@ public class CharacterAI : MonoBehaviour
 
     private float GetAttackPriority(CharacterAttack attack)
     {
-        float priority = attack.Priority;
+        float priority =
+            attack.LowAIPriority
+            + (attack.HighAIPriority - attack.LowAIPriority) * character.AIStrength;
 
         foreach (var condition in attack.PriorityConditions)
         {
             if (IsConditionMet(condition))
-                priority += condition.priority;
+            {
+                priority +=
+                    condition.lowAIPriorityAddition
+                    + (condition.highAIPriorityAddition - condition.lowAIPriorityAddition)
+                        * character.AIStrength;
+            }
         }
 
         return Mathf.Clamp(priority, 0f, 1f);
@@ -161,10 +224,13 @@ public class CharacterAI : MonoBehaviour
             Array.ConvertAll(attack.TargetingWeights, w => w.weight)
         );
 
-        return DistributionUtils.SampleDistribution(
-            aiDistribution,
-            Mathf.Max((1f - character.Intelligence) * 5f, MIN_TEMPERATURE)
-        );
+        if (isDebugMode)
+        {
+            Debug.Log("AI Distribution:");
+            DistributionUtils.PrintDistribution(aiDistribution);
+        }
+
+        return DistributionUtils.SampleDistribution(aiDistribution, character.AITemperature);
     }
 
     private Dictionary<Character, float> GetTargetDistribution(
@@ -258,22 +324,23 @@ public class CharacterAI : MonoBehaviour
                 }
             }
 
-            float threatValue = 1f;
+            bool isHighestThreat = currentThreat == highestThreat;
 
-            if (currentThreat == 0f)
+            if (highestThreat == 0f)
             {
-                threatValue = 1f;
+                // prioritize enemies with no threat
+                distribution[enemy] = 1.5f;
             }
-            else if (currentThreat < highestThreat)
+            else if (isHighestThreat)
             {
-                threatValue = 5f;
+                // range from 0 (we have a huge lead) to 1 (we barely have a lead)
+                distribution[enemy] = secondHighestThreat / highestThreat;
             }
             else
             {
-                threatValue = secondHighestThreat / currentThreat;
+                // range from 1.5 (we are barely behind) to 5 (we are way behind)
+                distribution[enemy] = 1.5f + 3.5f * (1f - currentThreat / highestThreat);
             }
-
-            distribution[enemy] = threatValue;
         }
 
         return distribution;

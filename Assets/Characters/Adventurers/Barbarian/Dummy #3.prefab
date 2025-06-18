@@ -94,11 +94,9 @@ GameObject:
   m_Component:
   - component: {fileID: 755308284309110338}
   - component: {fileID: 5633733767765297547}
-  - component: {fileID: 2752196068274348602}
   - component: {fileID: 8420561170371664604}
-  - component: {fileID: 6994000382588456149}
   m_Layer: 0
-  m_Name: Mage
+  m_Name: Dummy #3
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -118,7 +116,6 @@ Transform:
   m_Children:
   - {fileID: 4846516726508004354}
   - {fileID: 2018697151610427972}
-  - {fileID: 4350831976097606475}
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -134,29 +131,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 00a97e8a70def7b4db6342688ac1e124, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  portraitSprite: {fileID: 21300000, guid: 938c1a6c0a3367c4e932484f52893f3d, type: 3}
-  isEnemy: 0
-  enemyPowerLevel: 0
+  portraitSprite: {fileID: 21300000, guid: b4794129b61dee24b9d8951004f490ae, type: 3}
+  isEnemy: 1
+  enemyPowerLevel: 1
   role: 1
-  aiStrength: 1
-  maxHealth: 1000
-  maxResource: 1000
-  startingResource: 1000
-  resourceRegen: 10
-  resourceType: 0
---- !u!114 &2752196068274348602
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1204481746276270545}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c4e7a122e315f2448c1cb8f8fdab1df, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  isDebugMode: 0
+  aiStrength: 0.5
+  maxHealth: 6000
+  maxResource: 100
+  startingResource: 0
+  resourceRegen: 0
+  resourceType: 1
 --- !u!95 &8420561170371664604
 Animator:
   serializedVersion: 5
@@ -167,7 +151,7 @@ Animator:
   m_GameObject: {fileID: 1204481746276270545}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 023a4bb1058975044a813c6491f326b7, type: 2}
+  m_Controller: {fileID: 9100000, guid: d00cba8519601644ca37b31b19d547b0, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
@@ -178,35 +162,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &6994000382588456149
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1204481746276270545}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a59f045367cacbb46b3330d977bd9005, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  lowAIPriority: 1
-  highAIPriority: 1
-  priorityConditions: []
-  targetingWeights:
-  - targetingType: 2
-    weight: 1
-  - targetingType: 4
-    weight: 2
-  damage: 150
-  cooldown: 2
-  threatMultiplier: 1
-  statusEffectPrefab: {fileID: 0}
-  animationDelay: 0.5
-  attackAnimationTrigger: Attack
-  projectilePrefab: {fileID: 263224731993250228, guid: 4e5052e4e4b237146907fb48b87b219e, type: 3}
-  projectileSpeed: 20
-  projectileSpawnPoint: {fileID: 4350831976097606475}
 --- !u!1 &1318768680208249767
 GameObject:
   m_ObjectHideFlags: 0
@@ -280,7 +235,7 @@ SpriteRenderer:
   m_SortingLayerID: 1733882645
   m_SortingLayer: 1
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: b11bd69efcf761c4cbd065c6d7d58a0d, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 70140ba3e6bb0b34981f2f3ac5b635e6, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -291,34 +246,3 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!1 &8344882202625677793
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 4350831976097606475}
-  m_Layer: 0
-  m_Name: Fire Location
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &4350831976097606475
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8344882202625677793}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.669, y: 0.196, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 755308284309110338}
-  m_RootOrder: -1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

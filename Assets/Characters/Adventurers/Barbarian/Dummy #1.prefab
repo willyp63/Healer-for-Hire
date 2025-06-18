@@ -96,7 +96,7 @@ GameObject:
   - component: {fileID: 5633733767765297547}
   - component: {fileID: 8420561170371664604}
   m_Layer: 0
-  m_Name: Dummy
+  m_Name: Dummy #1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -135,8 +135,8 @@ MonoBehaviour:
   isEnemy: 1
   enemyPowerLevel: 1
   role: 1
-  intelligence: 0
-  maxHealth: 20000
+  aiStrength: 0.5
+  maxHealth: 6000
   maxResource: 100
   startingResource: 0
   resourceRegen: 0

@@ -151,4 +151,12 @@ public class DistributionUtils : MonoBehaviour
 
         return normalizedDistribution;
     }
+
+    public static void PrintDistribution<T>(Dictionary<T, float> distribution)
+    {
+        foreach (var kvp in distribution)
+        {
+            Debug.Log($"{kvp.Key}: {kvp.Value}");
+        }
+    }
 }

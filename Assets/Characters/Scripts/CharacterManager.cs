@@ -100,13 +100,6 @@ public class CharacterManager : Singleton<CharacterManager>
 
         // Hide unused UnitFrames
         HideUnusedUnitFrames();
-
-        Debug.Log(
-            $"Player characters: {string.Join(", ", new List<Character>(activePlayerCharacters).ConvertAll(c => c?.name ?? "null"))}"
-        );
-        Debug.Log(
-            $"Enemy characters: {string.Join(", ", new List<Character>(activeEnemyCharacters).ConvertAll(c => c?.name ?? "null"))}"
-        );
     }
 
     private void HideUnusedUnitFrames()

@@ -29,11 +29,7 @@ public class TauntAttack : CharacterAttack
             }
         }
 
-        // Set our threat equal to the highest threat value
-        if (highestThreat > 0f)
-        {
-            target.SetThreat(character, highestThreat + 1f);
-        }
+        target.SetThreat(character, highestThreat + 1f);
 
         CharacterAttack.ApplyDamageAndThreat(target, character, this);
 
