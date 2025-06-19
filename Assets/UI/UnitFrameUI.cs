@@ -4,8 +4,19 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+public enum UnitFrameHighlightStatus
+{
+    SelectedAndHovered,
+    Selected,
+    Hovered,
+    None,
+}
+
 public class UnitFrameUI : MonoBehaviour
 {
+    [SerializeField]
+    private Image highlightImage;
+
     [SerializeField]
     private Image portraitImage;
 
@@ -78,6 +89,28 @@ public class UnitFrameUI : MonoBehaviour
                     resourceFill.color = Color.white;
                     break;
             }
+        }
+    }
+
+    public void SetHighlightStatus(UnitFrameHighlightStatus highlightStatus)
+    {
+        if (highlightImage != null)
+        {
+            var alpha = 0f;
+            if (highlightStatus == UnitFrameHighlightStatus.SelectedAndHovered)
+            {
+                alpha = 0.9f;
+            }
+            else if (highlightStatus == UnitFrameHighlightStatus.Selected)
+            {
+                alpha = 0.75f;
+            }
+            else if (highlightStatus == UnitFrameHighlightStatus.Hovered)
+            {
+                alpha = 0.25f;
+            }
+
+            highlightImage.color = new Color(1f, 1f, 1f, alpha);
         }
     }
 
