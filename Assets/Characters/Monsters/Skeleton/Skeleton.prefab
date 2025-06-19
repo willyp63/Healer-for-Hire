@@ -106,7 +106,7 @@ MonoBehaviour:
   forwardPauseDuration: 0
   backwardPauseDuration: 0
   backwardDuration: 0.167
-  attackRange: 0.5
+  attackRange: 1
 --- !u!95 &1642277420635291815
 Animator:
   serializedVersion: 5

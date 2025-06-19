@@ -74,6 +74,7 @@ public class Character : MonoBehaviour
     public int CurrentHealth => currentHealth;
 
     private bool isDead = false;
+    public bool IsDead => isDead;
 
     private const float GLOBAL_COOLDOWN = 1f;
 
@@ -112,12 +113,12 @@ public class Character : MonoBehaviour
         currentResource = StartingResource;
 
         // give random initial delay to avoid all characters attacking at the same time
-        lastAttackTime = Time.time - UnityEngine.Random.Range(0f, GLOBAL_COOLDOWN / 2f);
+        lastAttackTime = Time.time - UnityEngine.Random.Range(0f, GLOBAL_COOLDOWN * 0.5f);
     }
 
     private void Update()
     {
-        if (currentHealth <= 0)
+        if (isDead)
             return;
 
         UpdateStatusEffects();
@@ -178,6 +179,14 @@ public class Character : MonoBehaviour
         if (currentTarget == null)
             return;
 
+        StartCoroutine(BeginAttack());
+    }
+
+    private IEnumerator BeginAttack()
+    {
+        // add a random delay to avoid attacks from lining up over and over
+        yield return new WaitForSeconds(UnityEngine.Random.Range(0f, 0.2f));
+
         if (currentAttack.CastTime > 0)
         {
             isCasting = true;
@@ -201,9 +210,6 @@ public class Character : MonoBehaviour
 
         // Attack
         currentAttack.Attack(currentTarget);
-
-        // randomize GCD a bit to avoid attacks from lining up over and over
-        lastAttackTime = Time.time + UnityEngine.Random.Range(0f, 0.1f);
 
         // Choose a new attack
         currentAttack = null;
@@ -235,6 +241,9 @@ public class Character : MonoBehaviour
 
     public void AddResource(int amount)
     {
+        if (isDead)
+            return;
+
         currentResource += amount;
         currentResource = Math.Max(Math.Min(currentResource, MaxResource), 0);
     }
@@ -262,6 +271,9 @@ public class Character : MonoBehaviour
 
     public void AddThreat(Character source, float amount)
     {
+        if (isDead)
+            return;
+
         if (!threatTable.ContainsKey(source))
         {
             threatTable[source] = 0;
@@ -271,11 +283,17 @@ public class Character : MonoBehaviour
 
     public void SetThreat(Character source, float amount)
     {
+        if (isDead)
+            return;
+
         threatTable[source] = amount;
     }
 
     public void Damage(int amount, bool hurt = true)
     {
+        if (isDead)
+            return;
+
         // Calculate total damage reduction from all active effects
         float totalReduction = 1f;
         foreach (var effect in activeEffects)
@@ -297,20 +315,21 @@ public class Character : MonoBehaviour
             AddResource(2 * (int)(amount * 100f / MaxHealth));
         }
 
-        if (hurt)
-        {
-            animator.SetTrigger("Hurt");
-        }
-
         if (currentHealth <= 0 && !isDead)
         {
             isDead = true;
             StartCoroutine(Die());
         }
+        else if (hurt)
+        {
+            animator.SetTrigger("Hurt");
+        }
     }
 
     private IEnumerator Die()
     {
+        RemoveAllStatusEffects();
+
         animator.SetTrigger("Die");
         yield return new WaitForSeconds(2f);
         CharacterManager.Instance.RemoveCharacter(this);
@@ -318,19 +337,25 @@ public class Character : MonoBehaviour
 
     public void Heal(int amount)
     {
+        if (isDead)
+            return;
+
         currentHealth += amount;
         currentHealth = Math.Min(currentHealth, MaxHealth);
     }
 
     public void ApplyStatusEffect(StatusEffect effect, Character source)
     {
+        if (isDead)
+            return;
+
         var existingEffect = activeEffects.Find(e => e.EffectName == effect.EffectName);
         if (existingEffect)
         {
-            if (existingEffect.IsStackable)
-                existingEffect.AddStack();
             existingEffect.Initialize(this, source);
             existingEffect.OnApply();
+            if (existingEffect.IsStackable)
+                existingEffect.AddStack();
             return;
         }
 

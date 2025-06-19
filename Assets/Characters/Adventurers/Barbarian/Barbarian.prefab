@@ -107,7 +107,7 @@ MonoBehaviour:
   forwardPauseDuration: 0
   backwardPauseDuration: 0
   backwardDuration: 0.167
-  attackRange: 0.5
+  attackRange: 1
 --- !u!114 &1559228639623071933
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -146,7 +146,7 @@ MonoBehaviour:
   forwardPauseDuration: 0
   backwardPauseDuration: 0
   backwardDuration: 0.167
-  attackRange: 0.5
+  attackRange: 1
 --- !u!114 &6171143494454277065
 MonoBehaviour:
   m_ObjectHideFlags: 0

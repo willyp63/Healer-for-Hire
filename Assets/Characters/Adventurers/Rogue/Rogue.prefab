@@ -97,7 +97,7 @@ MonoBehaviour:
     weight: 1
   resourceCost: 0
   castTime: 0
-  damage: 50
+  damage: 80
   cooldown: 1.5
   threatMultiplier: 1
   statusEffectPrefab: {fileID: 0}
@@ -107,7 +107,7 @@ MonoBehaviour:
   forwardPauseDuration: 0.067
   backwardPauseDuration: 0.067
   backwardDuration: 0.167
-  attackRange: 0.5
+  attackRange: 1
 --- !u!114 &-1936997599309346451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -130,7 +130,7 @@ MonoBehaviour:
     weight: 1
   resourceCost: 60
   castTime: 0
-  damage: 0
+  damage: 60
   cooldown: 1
   threatMultiplier: 1
   statusEffectPrefab: {fileID: 7074106375902350592, guid: 24bf9a563845e604b806ca186a352f93, type: 3}
@@ -140,7 +140,7 @@ MonoBehaviour:
   forwardPauseDuration: 0.167
   backwardPauseDuration: 0.167
   backwardDuration: 0.167
-  attackRange: 0.5
+  attackRange: 1
 --- !u!95 &1642277420635291815
 Animator:
   serializedVersion: 5

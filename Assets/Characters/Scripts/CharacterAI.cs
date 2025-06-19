@@ -234,7 +234,7 @@ public class CharacterAI : MonoBehaviour
         // Calculate threat values for each enemy
         foreach (var enemy in enemyCharacters)
         {
-            if (enemy == null)
+            if (enemy == null || enemy.IsDead)
                 continue;
 
             // Get current threat this tank has on this enemy
@@ -291,7 +291,7 @@ public class CharacterAI : MonoBehaviour
         // Calculate threat values for each enemy
         foreach (var enemy in enemyCharacters)
         {
-            if (enemy == null)
+            if (enemy == null || enemy.IsDead)
                 continue;
 
             // Get current threat this damage dealer has on this enemy
@@ -341,7 +341,7 @@ public class CharacterAI : MonoBehaviour
 
         foreach (var enemy in enemyCharacters)
         {
-            if (enemy == null)
+            if (enemy == null || enemy.IsDead)
                 continue;
 
             // Higher health = higher priority
@@ -361,7 +361,7 @@ public class CharacterAI : MonoBehaviour
 
         foreach (var enemy in enemyCharacters)
         {
-            if (enemy == null)
+            if (enemy == null || enemy.IsDead)
                 continue;
 
             // Lower health = higher priority
@@ -382,7 +382,7 @@ public class CharacterAI : MonoBehaviour
 
         foreach (var enemy in enemyCharacters)
         {
-            if (enemy == null)
+            if (enemy == null || enemy.IsDead)
                 continue;
 
             // Higher power level = higher priority
@@ -402,7 +402,7 @@ public class CharacterAI : MonoBehaviour
 
         foreach (var enemy in enemyCharacters)
         {
-            if (enemy == null)
+            if (enemy == null || enemy.IsDead)
                 continue;
 
             // Lower power level = higher priority
