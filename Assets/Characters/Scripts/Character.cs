@@ -79,6 +79,12 @@ public class Character : MonoBehaviour
 
     private float lastAttackTime = Mathf.NegativeInfinity;
 
+    private bool isCasting = false;
+    public bool IsCasting => isCasting;
+
+    private float castStartTime = Mathf.NegativeInfinity;
+    public float CastStartTime => castStartTime;
+
     private Dictionary<Character, float> threatTable = new();
     public Dictionary<Character, float> ThreatTable => threatTable;
 
@@ -90,7 +96,9 @@ public class Character : MonoBehaviour
 
     private const float DECISION_INTERVAL = 1.0f;
     private float lastDecisionTime = Mathf.NegativeInfinity;
+
     private CharacterAttack currentAttack;
+    private Character currentTarget;
 
     private CharacterAI characterAI;
     private Animator animator;
@@ -111,9 +119,25 @@ public class Character : MonoBehaviour
 
         UpdateStatusEffects();
         UpdateResource();
-        UpdateDecision();
 
-        TryToAttack();
+        if (isCasting)
+        {
+            UpdateCast();
+        }
+        else
+        {
+            UpdateDecision();
+            TryToAttack();
+        }
+    }
+
+    private void UpdateCast()
+    {
+        if (Time.time - castStartTime >= currentAttack.CastTime)
+        {
+            isCasting = false;
+            Attack();
+        }
     }
 
     private void UpdateResource()
@@ -147,18 +171,38 @@ public class Character : MonoBehaviour
             return;
 
         // Choose a target
-        var target = characterAI.ChooseTarget(currentAttack);
-        if (target == null)
+        currentTarget = characterAI.ChooseTarget(currentAttack);
+        if (currentTarget == null)
+            return;
+
+        if (currentAttack.CastTime > 0)
+        {
+            isCasting = true;
+            castStartTime = Time.time;
+
+            animator.SetTrigger("Cast");
+        }
+        else
+        {
+            Attack();
+        }
+    }
+
+    private void Attack()
+    {
+        if (currentAttack == null || currentTarget == null)
             return;
 
         // Consume resource
-        ConsumeResource(currentAttack.ResourceCost);
+        AddResource(-currentAttack.ResourceCost);
 
         // Attack
-        currentAttack.Attack(target);
+        currentAttack.Attack(currentTarget);
         lastAttackTime = Time.time;
 
         // Choose a new attack
+        currentAttack = null;
+        currentTarget = null;
         MakeAttackDecision();
     }
 
@@ -187,13 +231,7 @@ public class Character : MonoBehaviour
     public void AddResource(int amount)
     {
         currentResource += amount;
-        currentResource = Math.Min(currentResource, MaxResource);
-    }
-
-    public void ConsumeResource(int amount)
-    {
-        currentResource -= amount;
-        currentResource = Math.Max(currentResource, 0);
+        currentResource = Math.Max(Math.Min(currentResource, MaxResource), 0);
     }
 
     public Character GetHighestThreatTarget()

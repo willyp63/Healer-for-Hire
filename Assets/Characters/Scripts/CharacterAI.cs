@@ -102,18 +102,13 @@ public class CharacterAI : MonoBehaviour
 
     private float GetAttackPriority(CharacterAttack attack)
     {
-        float priority =
-            attack.LowAIPriority
-            + (attack.HighAIPriority - attack.LowAIPriority) * character.AIStrength;
+        float priority = attack.Priority;
 
         foreach (var condition in attack.PriorityConditions)
         {
             if (IsConditionMet(condition))
             {
-                priority +=
-                    condition.lowAIPriorityAddition
-                    + (condition.highAIPriorityAddition - condition.lowAIPriorityAddition)
-                        * character.AIStrength;
+                priority += condition.priorityAddition;
             }
         }
 
@@ -484,8 +479,8 @@ public class CharacterAI : MonoBehaviour
 
             // Calculate readiness penalty using a continuous function
             // Attacks ready now or in 0.5s get full priority, attacks ready in 2-3 seconds get heavily penalized
-            // https://www.wolframalpha.com/input?i=e%5E%28%28x+-+0.5%29+*+-1.1%29+from+0+to+3
-            float readinessMultiplier = Mathf.Min(1f, Mathf.Exp(-1.1f * (timeUntilReady - 0.5f)));
+            // https://www.wolframalpha.com/input?i=e%5E%28%28x+-+0.5%29+*+-1.33%29+from+0+to+3
+            float readinessMultiplier = Mathf.Min(1f, Mathf.Exp(-1.33f * (timeUntilReady - 0.5f)));
 
             // Calculate resource penalty if we have higher priority attacks that are resource-blocked
             float resourcePenalty = 1f;

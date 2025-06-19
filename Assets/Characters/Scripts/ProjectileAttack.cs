@@ -37,7 +37,7 @@ public class ProjectileAttack : CharacterAttack
 
         if (projectileComponent != null)
         {
-            projectileComponent.Initialize(target, character, this);
+            projectileComponent.Initialize(target, character, this, projectileSpeed);
         }
         else
         {

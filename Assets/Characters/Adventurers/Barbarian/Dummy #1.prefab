@@ -140,8 +140,8 @@ MonoBehaviour:
   maxHealth: 6000
   maxResource: 100
   startingResource: 0
-  resourceRegen: 0
-  resourceRegenInterval: 1
+  resourceRegen: -1
+  resourceRegenInterval: 3
   resourceType: 1
 --- !u!95 &8420561170371664604
 Animator:

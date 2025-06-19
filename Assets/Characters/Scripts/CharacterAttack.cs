@@ -46,8 +46,7 @@ public struct PriorityCondition
     public OperatorType operatorType;
     public float value;
 
-    public float lowAIPriorityAddition;
-    public float highAIPriorityAddition;
+    public float priorityAddition;
 }
 
 public abstract class CharacterAttack : MonoBehaviour
@@ -57,12 +56,8 @@ public abstract class CharacterAttack : MonoBehaviour
     public string AttackName => attackName;
 
     [SerializeField]
-    protected float lowAIPriority = 0;
-    public float LowAIPriority => lowAIPriority;
-
-    [SerializeField]
-    protected float highAIPriority = 0;
-    public float HighAIPriority => highAIPriority;
+    protected float priority = 0;
+    public float Priority => priority;
 
     [SerializeField]
     protected PriorityCondition[] priorityConditions;
@@ -75,6 +70,10 @@ public abstract class CharacterAttack : MonoBehaviour
     [SerializeField]
     protected int resourceCost = 0;
     public int ResourceCost => resourceCost;
+
+    [SerializeField]
+    protected float castTime = 0f;
+    public float CastTime => castTime;
 
     [SerializeField]
     protected int damage = 0;
