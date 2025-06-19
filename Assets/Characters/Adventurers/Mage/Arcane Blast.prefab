@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3154582254308014812}
   - component: {fileID: 1883586980669898227}
+  - component: {fileID: 4213670531596500898}
   m_Layer: 0
   m_Name: Arcane Blast
   m_TagString: Untagged
@@ -45,6 +46,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 51d13e720895743479a7920a25c7dbbf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &4213670531596500898
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 113465222213965930}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40dc650b98e02943bd3bc591fd1ad2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isStatic: 0
 --- !u!1 &1357015515412660480
 GameObject:
   m_ObjectHideFlags: 0

@@ -198,6 +198,26 @@ public class CharacterManager : Singleton<CharacterManager>
         Destroy(character.gameObject);
     }
 
+    public Vector3 GetCharacterSlotPosition(Character character)
+    {
+        // Search in player characters first
+        int playerIndex = Array.IndexOf(activePlayerCharacters, character);
+        if (playerIndex != -1 && playerIndex < playerSlots.Count)
+        {
+            return playerSlots[playerIndex].transform.position;
+        }
+
+        // Search in enemy characters
+        int enemyIndex = Array.IndexOf(activeEnemyCharacters, character);
+        if (enemyIndex != -1 && enemyIndex < enemySlots.Count)
+        {
+            return enemySlots[enemyIndex].transform.position;
+        }
+
+        // If character not found, return zero vector
+        return Vector3.zero;
+    }
+
     public Character GetClosestTarget(Character character)
     {
         // Get the appropriate lists based on which side the character is on

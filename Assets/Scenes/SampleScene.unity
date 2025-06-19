@@ -4695,14 +4695,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCharacters:
+  - {fileID: 6758429887182859851, guid: 19530bf8f19197e499e5e1eef6f4210c, type: 3}
+  - {fileID: 2678133424579707393, guid: 2547069fdb29186479e639e4332d6901, type: 3}
   - {fileID: 2678133424579707393, guid: 386316b8872debc4095b5d5052493823, type: 3}
   - {fileID: 6758429887182859851, guid: e6d3bb09693c11e40b09b5ee49304a84, type: 3}
   enemyCharacters:
-  - {fileID: 5633733767765297547, guid: 1724f26f72bdd2e4890ebd370f8b4ac0, type: 3}
-  - {fileID: 5633733767765297547, guid: f8a91c26cf36bad438ee375885dcf0c5, type: 3}
-  - {fileID: 5633733767765297547, guid: 91708103336a30e4490bb898dd1aa524, type: 3}
-  - {fileID: 5633733767765297547, guid: d05fea9e2a60c944fbcb57f8c5dcbe67, type: 3}
-  - {fileID: 5633733767765297547, guid: 97a8769d57b1f154e86bdb4a1b1a303b, type: 3}
+  - {fileID: 2678133424579707393, guid: 13d64dcaab8431748beecf3ed33ff206, type: 3}
+  - {fileID: 2678133424579707393, guid: 13d64dcaab8431748beecf3ed33ff206, type: 3}
+  - {fileID: 2678133424579707393, guid: 13d64dcaab8431748beecf3ed33ff206, type: 3}
+  - {fileID: 2678133424579707393, guid: 13d64dcaab8431748beecf3ed33ff206, type: 3}
+  - {fileID: 2678133424579707393, guid: 13d64dcaab8431748beecf3ed33ff206, type: 3}
   playerSlots:
   - {fileID: 115107745}
   - {fileID: 1218589780}

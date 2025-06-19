@@ -18,7 +18,7 @@ public class FloatingTextManager : Singleton<FloatingTextManager>
         SpawnText(effect.ToUpper(), position, Color.yellow);
     }
 
-    private void SpawnText(string text, Vector3 position, Color color)
+    public void SpawnText(string text, Vector3 position, Color color)
     {
         FloatingText instance = Instantiate(floatingTextPrefab, canvas.transform);
         instance.Initialize(text, position, color);

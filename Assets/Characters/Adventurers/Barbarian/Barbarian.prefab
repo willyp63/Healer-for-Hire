@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 6171143494454277065}
   - component: {fileID: 6526589568260069699}
   - component: {fileID: 1642277420635291815}
+  - component: {fileID: -4514637957722170502}
   m_Layer: 0
   m_Name: Barbarian
   m_TagString: Untagged
@@ -103,8 +104,10 @@ MonoBehaviour:
   animationDelay: 0.6
   attackAnimationTrigger: Attack Extra
   forwardDuration: 0.167
+  forwardPauseDuration: 0
+  backwardPauseDuration: 0
   backwardDuration: 0.167
-  attackRange: 0.3
+  attackRange: 0.5
 --- !u!114 &1559228639623071933
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -134,14 +137,16 @@ MonoBehaviour:
   resourceCost: 20
   castTime: 0
   damage: 50
-  cooldown: 0
+  cooldown: 1
   threatMultiplier: 3.5
   statusEffectPrefab: {fileID: 0}
   animationDelay: 0.6
   attackAnimationTrigger: Attack Extra
   forwardDuration: 0.167
+  forwardPauseDuration: 0
+  backwardPauseDuration: 0
   backwardDuration: 0.167
-  attackRange: 0.3
+  attackRange: 0.5
 --- !u!114 &6171143494454277065
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,7 +206,7 @@ MonoBehaviour:
   resourceCost: 30
   castTime: 0
   damage: 0
-  cooldown: 20
+  cooldown: 60
   threatMultiplier: 1
   statusEffectPrefab: {fileID: -922070525085289107, guid: 6c1e6f983ffae4f4cb57ab6c9a1445df, type: 3}
   animationDelay: 0.2
@@ -227,6 +232,19 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &-4514637957722170502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6162112231914770403}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c40dc650b98e02943bd3bc591fd1ad2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isStatic: 0
 --- !u!1 &6816342603979159119
 GameObject:
   m_ObjectHideFlags: 0

@@ -33,6 +33,6 @@ public class TauntAttack : CharacterAttack
 
         CharacterAttack.ApplyDamageAndThreat(target, character, this);
 
-        FloatingTextManager.Instance.SpawnEffect("Taunt", target.transform.position);
+        FloatingTextManager.Instance.SpawnEffect("TAUNT", target.transform.position);
     }
 }

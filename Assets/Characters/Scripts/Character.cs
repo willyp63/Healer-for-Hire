@@ -110,6 +110,9 @@ public class Character : MonoBehaviour
         attacks = GetComponents<CharacterAttack>();
         currentHealth = MaxHealth;
         currentResource = StartingResource;
+
+        // give random initial delay to avoid all characters attacking at the same time
+        lastAttackTime = Time.time - UnityEngine.Random.Range(0f, GLOBAL_COOLDOWN / 2f);
     }
 
     private void Update()
@@ -198,7 +201,9 @@ public class Character : MonoBehaviour
 
         // Attack
         currentAttack.Attack(currentTarget);
-        lastAttackTime = Time.time;
+
+        // randomize GCD a bit to avoid attacks from lining up over and over
+        lastAttackTime = Time.time + UnityEngine.Random.Range(0f, 0.1f);
 
         // Choose a new attack
         currentAttack = null;

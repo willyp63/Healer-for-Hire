@@ -448,9 +448,16 @@ public class CharacterAI : MonoBehaviour
             float resourceTimeRemaining = 0f;
             if (attack.ResourceCost > character.CurrentResource)
             {
-                float resourceNeeded = attack.ResourceCost - character.CurrentResource;
-                resourceTimeRemaining =
-                    resourceNeeded / character.ResourceRegen * character.ResourceRegenInterval;
+                if (character.ResourceRegen <= 0f)
+                {
+                    resourceTimeRemaining = 999f;
+                }
+                else
+                {
+                    float resourceNeeded = attack.ResourceCost - character.CurrentResource;
+                    resourceTimeRemaining =
+                        resourceNeeded / character.ResourceRegen * character.ResourceRegenInterval;
+                }
             }
 
             timeToReady[attack] = Mathf.Max(cooldownTimeRemaining, resourceTimeRemaining);
