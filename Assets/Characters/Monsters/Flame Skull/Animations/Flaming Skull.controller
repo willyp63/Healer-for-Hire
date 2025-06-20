@@ -454,7 +454,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: Skeleton Dragon
+  m_Name: Flaming Skull
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: IsMoving
