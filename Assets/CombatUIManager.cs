@@ -55,25 +55,7 @@ public class CombatUIManager : MonoBehaviour
         int hoveredIndex = GetFrameIndexAtPosition(worldMousePosition);
 
         // Update all frame highlight statuses
-        for (int i = 0; i < playerFrames.Count; i++)
-        {
-            UnitFrameHighlightStatus status = UnitFrameHighlightStatus.None;
-
-            if (i == selectedFrameIndex && i == hoveredIndex)
-            {
-                status = UnitFrameHighlightStatus.SelectedAndHovered;
-            }
-            else if (i == selectedFrameIndex)
-            {
-                status = UnitFrameHighlightStatus.Selected;
-            }
-            else if (i == hoveredIndex)
-            {
-                status = UnitFrameHighlightStatus.Hovered;
-            }
-
-            playerFrames[i].SetHighlightStatus(status);
-        }
+        UpdateFrameHighlightStatuses(hoveredIndex);
 
         // Handle clicks separately
         if (Input.GetMouseButtonDown(0))
@@ -95,6 +77,10 @@ public class CombatUIManager : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
             CycleFrameSelection(-1);
+        }
+        else if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            ClearFrameSelection();
         }
 
         // Handle card playing with 1, 2, 3, 4, 5, 6 keys
@@ -185,19 +171,7 @@ public class CombatUIManager : MonoBehaviour
         );
         worldMousePosition.z = 0f;
 
-        // Check if hovering over a unit frame
-        int hoveredIndex = GetFrameIndexAtPosition(worldMousePosition);
-        if (hoveredIndex >= 0 && hoveredIndex < playerFrames.Count)
-        {
-            // Get the character associated with this frame
-            var playerCharacters = CharacterManager.Instance.GetActivePlayerCharacters();
-            if (hoveredIndex < playerCharacters.Count && playerCharacters[hoveredIndex] != null)
-            {
-                return playerCharacters[hoveredIndex];
-            }
-        }
-
-        // If not hovering over any unit frame, use the selected unit
+        // Check for selected unit
         if (selectedFrameIndex >= 0 && selectedFrameIndex < playerFrames.Count)
         {
             var playerCharacters = CharacterManager.Instance.GetActivePlayerCharacters();
@@ -207,6 +181,18 @@ public class CombatUIManager : MonoBehaviour
             )
             {
                 return playerCharacters[selectedFrameIndex];
+            }
+        }
+
+        // If no selected unit, check if hovering over a unit frame
+        int hoveredIndex = GetFrameIndexAtPosition(worldMousePosition);
+        if (hoveredIndex >= 0 && hoveredIndex < playerFrames.Count)
+        {
+            // Get the character associated with this frame
+            var playerCharacters = CharacterManager.Instance.GetActivePlayerCharacters();
+            if (hoveredIndex < playerCharacters.Count && playerCharacters[hoveredIndex] != null)
+            {
+                return playerCharacters[hoveredIndex];
             }
         }
 
@@ -351,5 +337,46 @@ public class CombatUIManager : MonoBehaviour
             mainPlayerCharacter.CurrentResource,
             mainPlayerCharacter.MaxResource
         );
+    }
+
+    private void ClearFrameSelection()
+    {
+        selectedFrameIndex = -1;
+
+        // Get current hover index for proper status updates
+        Vector3 mousePosition = Input.mousePosition;
+        Vector3 worldMousePosition = mainCamera.ScreenToWorldPoint(
+            new Vector3(mousePosition.x, mousePosition.y, 0f)
+        );
+        worldMousePosition.z = 0f;
+        int hoveredIndex = GetFrameIndexAtPosition(worldMousePosition);
+
+        // Update all frame highlight statuses
+        UpdateFrameHighlightStatuses(hoveredIndex);
+
+        Debug.Log("Unit frame selection cleared");
+    }
+
+    private void UpdateFrameHighlightStatuses(int hoveredIndex)
+    {
+        for (int i = 0; i < playerFrames.Count; i++)
+        {
+            UnitFrameHighlightStatus status = UnitFrameHighlightStatus.None;
+
+            if (i == selectedFrameIndex && i == hoveredIndex)
+            {
+                status = UnitFrameHighlightStatus.SelectedAndHovered;
+            }
+            else if (i == selectedFrameIndex)
+            {
+                status = UnitFrameHighlightStatus.Selected;
+            }
+            else if (i == hoveredIndex)
+            {
+                status = UnitFrameHighlightStatus.Hovered;
+            }
+
+            playerFrames[i].SetHighlightStatus(status);
+        }
     }
 }
