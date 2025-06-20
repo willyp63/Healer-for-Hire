@@ -18,6 +18,14 @@ public enum ResourceType
     Energy,
 }
 
+public enum CharacterState
+{
+    Idle,
+    Moving,
+    Casting,
+    Dead,
+}
+
 public class Character : MonoBehaviour
 {
     [SerializeField]
@@ -35,10 +43,6 @@ public class Character : MonoBehaviour
     [SerializeField]
     private int enemyPowerLevel = 0;
     public int EnemyPowerLevel => enemyPowerLevel;
-
-    [SerializeField]
-    private CharacterRole role = CharacterRole.Damage;
-    public CharacterRole Role => role;
 
     [SerializeField]
     private float aiStrength = 1f; // 0 is very dumb, 1 is very smart
@@ -77,18 +81,15 @@ public class Character : MonoBehaviour
     private int currentHealth = 0;
     public int CurrentHealth => currentHealth;
 
-    private bool isDead = false;
-    public bool IsDead => isDead;
+    private CharacterState state = CharacterState.Idle;
+    public CharacterState State => state;
 
-    private bool isWaiting = false;
-    public bool IsWaiting => isWaiting;
+    public bool IsIdle => state == CharacterState.Idle;
+    public bool IsMoving => state == CharacterState.Moving;
+    public bool IsCasting => state == CharacterState.Casting;
+    public bool IsDead => state == CharacterState.Dead;
 
-    private const float GLOBAL_COOLDOWN = 1f;
-
-    private float lastAttackTime = Mathf.NegativeInfinity;
-
-    private bool isCasting = false;
-    public bool IsCasting => isCasting;
+    private float lastAttackEndTime = Mathf.NegativeInfinity;
 
     private float castStartTime = Mathf.NegativeInfinity;
     public float CastStartTime => castStartTime;
@@ -105,38 +106,38 @@ public class Character : MonoBehaviour
     private const float DECISION_INTERVAL = 1.0f;
     private float lastDecisionTime = Mathf.NegativeInfinity;
 
+    private const float HURT_COOLDOWN = 0.25f;
+    private float lastHurtTime = Mathf.NegativeInfinity;
+
     private CharacterAttack currentAttack;
     private Character currentTarget;
 
     private CharacterAI characterAI;
     private Animator animator;
 
-    private void Start()
+    private void Awake()
     {
         characterAI = GetComponent<CharacterAI>();
         animator = GetComponent<Animator>();
         attacks = GetComponents<CharacterAttack>();
         currentHealth = MaxHealth;
         currentResource = StartingResource;
-
-        // give random initial delay to avoid all characters attacking at the same time
-        lastAttackTime = Time.time - UnityEngine.Random.Range(0f, GLOBAL_COOLDOWN * 0.5f);
     }
 
     private void Update()
     {
-        if (isDead)
+        if (IsDead)
             return;
 
         UpdateStatusEffects();
         UpdateResource();
         UpdateThreat();
 
-        // Don't attack or make decisions while walking
-        if (isWaiting)
+        // Don't attack or make decisions while moving
+        if (IsMoving)
             return;
 
-        if (isCasting)
+        if (IsCasting)
         {
             UpdateCast();
         }
@@ -149,11 +150,30 @@ public class Character : MonoBehaviour
 
     private void UpdateCast()
     {
+        if (!IsCasting)
+            return;
+
+        if (currentAttack == null || currentTarget == null || currentTarget.IsDead)
+        {
+            SetState(CharacterState.Idle);
+            MakeAttackDecision();
+            return;
+        }
+
         if (Time.time - castStartTime >= currentAttack.CastTime)
         {
-            isCasting = false;
-            Attack();
+            StartCoroutine(Cast());
         }
+    }
+
+    private IEnumerator Cast()
+    {
+        Attack();
+
+        // HACK: Wait for animator to transition to attack animation before setting state to idle.
+        //   otherwise this idle animation plays for a split second before the attack animation
+        yield return new WaitForEndOfFrame();
+        SetState(CharacterState.Idle);
     }
 
     private void UpdateResource()
@@ -191,7 +211,7 @@ public class Character : MonoBehaviour
     {
         // Check if we can attack
         if (
-            Time.time - lastAttackTime < GLOBAL_COOLDOWN
+            Time.time < lastAttackEndTime
             || currentAttack == null
             || currentAttack.IsOnCooldown()
             || currentAttack.ResourceCost > currentResource
@@ -203,20 +223,10 @@ public class Character : MonoBehaviour
         if (currentTarget == null)
             return;
 
-        StartCoroutine(BeginAttack());
-    }
-
-    private IEnumerator BeginAttack()
-    {
-        // add a random delay to avoid attacks from lining up over and over
-        yield return new WaitForSeconds(UnityEngine.Random.Range(0f, 0.2f));
-
         if (currentAttack.CastTime > 0)
         {
-            isCasting = true;
+            SetState(CharacterState.Casting);
             castStartTime = Time.time;
-
-            animator.SetTrigger("Cast");
         }
         else
         {
@@ -226,14 +236,18 @@ public class Character : MonoBehaviour
 
     private void Attack()
     {
-        if (currentAttack == null || currentTarget == null)
+        if (currentAttack == null || currentTarget == null || currentTarget.IsDead)
+        {
+            MakeAttackDecision();
             return;
+        }
 
         // Consume resource
         AddResource(-currentAttack.ResourceCost);
 
         // Attack
         currentAttack.Attack(currentTarget);
+        lastAttackEndTime = Time.time + currentAttack.Duration;
 
         // Choose a new attack
         currentAttack = null;
@@ -265,7 +279,7 @@ public class Character : MonoBehaviour
 
     public void AddResource(int amount)
     {
-        if (isDead)
+        if (IsDead)
             return;
 
         currentResource += amount;
@@ -295,7 +309,7 @@ public class Character : MonoBehaviour
 
     public void AddThreat(Character source, float amount)
     {
-        if (isDead)
+        if (IsDead)
             return;
 
         if (!threatTable.ContainsKey(source))
@@ -307,7 +321,7 @@ public class Character : MonoBehaviour
 
     public void SetThreat(Character source, float amount)
     {
-        if (isDead)
+        if (IsDead)
             return;
 
         threatTable[source] = amount;
@@ -315,7 +329,7 @@ public class Character : MonoBehaviour
 
     public void Damage(int amount, bool hurt = true)
     {
-        if (isDead)
+        if (IsDead)
             return;
 
         // Calculate total damage reduction from all active effects
@@ -339,13 +353,14 @@ public class Character : MonoBehaviour
             AddResource(2 * (int)(amount * 100f / MaxHealth));
         }
 
-        if (currentHealth <= 0 && !isDead)
+        if (currentHealth <= 0 && !IsDead)
         {
-            isDead = true;
+            SetState(CharacterState.Dead);
             StartCoroutine(Die());
         }
-        else if (hurt)
+        else if (hurt && Time.time > lastHurtTime + HURT_COOLDOWN)
         {
+            lastHurtTime = Time.time;
             animator.SetTrigger("Hurt");
         }
     }
@@ -357,14 +372,13 @@ public class Character : MonoBehaviour
         currentHealth = 0;
         currentResource = 0;
 
-        animator.SetTrigger("Die");
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1.5f);
         CharacterManager.Instance.RemoveCharacter(this);
     }
 
     public void Heal(int amount)
     {
-        if (isDead)
+        if (IsDead)
             return;
 
         currentHealth += amount;
@@ -373,7 +387,7 @@ public class Character : MonoBehaviour
 
     public void ApplyStatusEffect(StatusEffect effect, Character source)
     {
-        if (isDead)
+        if (IsDead)
             return;
 
         var existingEffect = activeEffects.Find(e => e.EffectName == effect.EffectName);
@@ -425,23 +439,20 @@ public class Character : MonoBehaviour
         return null;
     }
 
-    public void SetWaitingState(bool waiting)
+    public void SetState(CharacterState newState)
     {
-        isWaiting = waiting;
-    }
+        state = newState;
 
-    public void SetRunningState(bool running)
-    {
-        if (animator != null)
+        Debug.Log($"Setting state to {newState}");
+
+        animator.SetBool("IsMoving", IsMoving && !isEnemy);
+        animator.SetBool("IsCasting", IsCasting);
+        animator.SetBool("IsDead", IsDead);
+
+        if (newState == CharacterState.Idle)
         {
-            if (running)
-            {
-                animator.SetTrigger("Run");
-            }
-            else
-            {
-                animator.SetTrigger("Idle");
-            }
+            // give random initial delay to avoid all characters attacking at the same time
+            lastAttackEndTime = Time.time + UnityEngine.Random.Range(1f, 2f);
         }
     }
 }

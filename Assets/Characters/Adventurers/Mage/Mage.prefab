@@ -87,9 +87,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   portraitSprite: {fileID: 21300000, guid: 938c1a6c0a3367c4e932484f52893f3d, type: 3}
+  isMainPlayer: 0
   isEnemy: 0
   enemyPowerLevel: 0
-  role: 1
   aiStrength: 1
   maxHealth: 1000
   maxResource: 1000
@@ -137,11 +137,12 @@ MonoBehaviour:
   resourceCost: 0
   castTime: 0
   damage: 30
+  duration: 1
   cooldown: 1.5
   threatMultiplier: 1
   statusEffectPrefab: {fileID: 0}
   animationDelay: 0.3
-  attackAnimationTrigger: Attack
+  attackAnimationTrigger: Attack 1
   projectilePrefab: {fileID: 5595085714814185971, guid: 1fd04291d1f3f0c4cb9b893008b45237, type: 3}
   projectileSpeed: 20
   projectileSpawnPoint: {fileID: 6995673876668132776}
@@ -172,11 +173,12 @@ MonoBehaviour:
   resourceCost: 200
   castTime: 2.5
   damage: 300
+  duration: 1
   cooldown: 0
   threatMultiplier: 1
   statusEffectPrefab: {fileID: 0}
   animationDelay: 0.3
-  attackAnimationTrigger: Attack
+  attackAnimationTrigger: Attack 1
   projectilePrefab: {fileID: 113465222213965930, guid: 4e5052e4e4b237146907fb48b87b219e, type: 3}
   projectileSpeed: 15
   projectileSpawnPoint: {fileID: 6995673876668132776}
@@ -221,11 +223,12 @@ MonoBehaviour:
   resourceCost: 250
   castTime: 1.5
   damage: 100
+  duration: 1
   cooldown: 0
   threatMultiplier: 1
   statusEffectPrefab: {fileID: 0}
   animationDelay: 0.3
-  attackAnimationTrigger: Attack
+  attackAnimationTrigger: Attack 1
   projectilePrefab: {fileID: 5595085714814185971, guid: 1fd04291d1f3f0c4cb9b893008b45237, type: 3}
   projectileSpeed: 24
   projectileSpawnPoint: {fileID: 1681759710861330605}
@@ -255,11 +258,12 @@ MonoBehaviour:
   resourceCost: 0
   castTime: 0
   damage: 0
+  duration: 1
   cooldown: 60
   threatMultiplier: 1
   statusEffectPrefab: {fileID: 5178496039264010993, guid: a48b7659363bc1e45a7a58afe8ab6599, type: 3}
   animationDelay: 0.3
-  attackAnimationTrigger: Attack
+  attackAnimationTrigger: Attack 1
 --- !u!95 &919241002919510896
 Animator:
   serializedVersion: 5
@@ -270,7 +274,7 @@ Animator:
   m_GameObject: {fileID: 396695054578617951}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 023a4bb1058975044a813c6491f326b7, type: 2}
+  m_Controller: {fileID: 9100000, guid: c312b861ba3c8d84fbde9182c9bd1a2c, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

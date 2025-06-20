@@ -80,6 +80,10 @@ public abstract class CharacterAttack : MonoBehaviour
     public int Damage => damage;
 
     [SerializeField]
+    protected float duration = 1f;
+    public float Duration => duration;
+
+    [SerializeField]
     protected float cooldown = 1f;
     public float Cooldown => cooldown;
 

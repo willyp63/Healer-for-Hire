@@ -7,16 +7,13 @@ public class MeleeAttack : CharacterAttack
     private float forwardDuration = 0.167f;
 
     [SerializeField]
-    private float forwardPauseDuration = 0f;
-
-    [SerializeField]
-    private float backwardPauseDuration = 0f;
+    private float pauseDuration = 0f;
 
     [SerializeField]
     private float backwardDuration = 0.167f;
 
     [SerializeField]
-    private float attackRange = 0.3f;
+    private float attackRange = 1f;
 
     public override void Attack(Character target)
     {
@@ -31,7 +28,7 @@ public class MeleeAttack : CharacterAttack
             yield break;
 
         // Store original position
-        Vector3 originalPosition = CharacterManager.Instance.GetCharacterSlotPosition(character);
+        Vector3 originalPosition = character.transform.position;
         Vector3 targetPosition = CharacterManager.Instance.GetCharacterSlotPosition(target);
 
         // Wait for animation to reach the right point
@@ -39,6 +36,7 @@ public class MeleeAttack : CharacterAttack
 
         // Dash to target
         float elapsed = 0f;
+        bool hasHit = false;
 
         while (elapsed < forwardDuration && target != null)
         {
@@ -48,25 +46,22 @@ public class MeleeAttack : CharacterAttack
                 elapsed / forwardDuration
             );
             elapsed += Time.deltaTime;
+
+            if (!hasHit && IsInRange(target))
+            {
+                hasHit = true;
+                CharacterAttack.ApplyDamageAndThreat(target, character, this);
+            }
+
             yield return null;
         }
 
-        yield return new WaitForSeconds(forwardPauseDuration);
-
-        // Apply damage if we're close enough to the target
-        if (
-            target != null
-            && Vector3.Distance(transform.position, target.transform.position) <= attackRange
-        )
-        {
-            CharacterAttack.ApplyDamageAndThreat(target, character, this);
-        }
-        else
+        if (!hasHit)
         {
             FloatingTextManager.Instance.SpawnText("MISS", transform.position, Color.gray);
         }
 
-        yield return new WaitForSeconds(backwardPauseDuration);
+        yield return new WaitForSeconds(pauseDuration);
 
         // Dash back to original position
         elapsed = 0f;
@@ -85,5 +80,13 @@ public class MeleeAttack : CharacterAttack
 
         // Ensure we're exactly at the original position
         transform.position = originalPosition;
+    }
+
+    private bool IsInRange(Character target)
+    {
+        if (target == null)
+            return false;
+
+        return Vector3.Distance(transform.position, target.transform.position) <= attackRange;
     }
 }

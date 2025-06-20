@@ -341,11 +341,8 @@ public class CharacterManager : Singleton<CharacterManager>
             }
         }
 
-        // Set all player characters to running state
-        SetAllPlayerCharactersRunning(true);
-
-        // turn off all character's attacks
-        SetAllCharactersWaiting(true);
+        // Set all player characters to moving state
+        SetAllCharactersState(CharacterState.Moving);
 
         // Move enemies and background to the left
         yield return StartCoroutine(MoveEnemiesToSlots(spawnedEnemies));
@@ -353,14 +350,8 @@ public class CharacterManager : Singleton<CharacterManager>
         // show enemy unit frames
         HideUnusedEnemyUnitFrames();
 
-        // Set all player characters back to idle
-        SetAllPlayerCharactersRunning(false);
-
-        // Wait for 1 second
-        yield return new WaitForSeconds(1f);
-
-        // turn on all character's attacks
-        SetAllCharactersWaiting(false);
+        // Set all player characters back to idle (start combat)
+        SetAllCharactersState(CharacterState.Idle);
 
         // Move background back to original position
         background.position = originalBackgroundPosition;
@@ -381,24 +372,13 @@ public class CharacterManager : Singleton<CharacterManager>
         }
     }
 
-    private void SetAllPlayerCharactersRunning(bool running)
+    private void SetAllCharactersState(CharacterState state)
     {
         foreach (var character in activePlayerCharacters)
         {
             if (character != null)
             {
-                character.SetRunningState(running);
-            }
-        }
-    }
-
-    private void SetAllCharactersWaiting(bool waiting)
-    {
-        foreach (var character in activePlayerCharacters)
-        {
-            if (character != null)
-            {
-                character.SetWaitingState(waiting);
+                character.SetState(state);
             }
         }
 
@@ -406,7 +386,7 @@ public class CharacterManager : Singleton<CharacterManager>
         {
             if (character != null)
             {
-                character.SetWaitingState(waiting);
+                character.SetState(state);
             }
         }
     }

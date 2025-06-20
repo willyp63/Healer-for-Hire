@@ -86,7 +86,6 @@ MonoBehaviour:
   isMainPlayer: 1
   isEnemy: 0
   enemyPowerLevel: 0
-  role: 2
   aiStrength: 1
   maxHealth: 1000
   maxResource: 1000
@@ -117,7 +116,7 @@ Animator:
   m_GameObject: {fileID: 2392621436927683936}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 3e70a69df103dab4ba59a3806c4627ec, type: 2}
+  m_Controller: {fileID: 9100000, guid: d955c190fe0b39c478d5eacdaecb28aa, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0

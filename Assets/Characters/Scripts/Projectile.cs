@@ -3,12 +3,17 @@ using UnityEngine;
 
 public class Projectile : MonoBehaviour
 {
+    private readonly float HIT_RANGE = 0.25f;
+    private readonly Vector3 HIT_OFFSET = new Vector3(0f, 0.5f, 0f);
+
     private Character target;
     private Character attacker;
     private CharacterAttack attack;
 
     private float projectileSpeed;
     private bool isHit = false;
+
+    private Vector3 targetPosition;
 
     private Animator animator;
     private SpriteRenderer spriteRenderer;
@@ -24,6 +29,8 @@ public class Projectile : MonoBehaviour
         this.attacker = attacker;
         this.attack = attack;
         this.projectileSpeed = projectileSpeed;
+
+        targetPosition = CharacterManager.Instance.GetCharacterSlotPosition(target) + HIT_OFFSET;
 
         animator = GetComponentInChildren<Animator>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
@@ -41,7 +48,6 @@ public class Projectile : MonoBehaviour
         }
 
         // Move towards target
-        Vector3 targetPosition = target.transform.position + new Vector3(0f, 0.5f, 0f);
         Vector3 direction = (targetPosition - transform.position).normalized;
         transform.position += direction * projectileSpeed * Time.deltaTime;
 
@@ -49,7 +55,9 @@ public class Projectile : MonoBehaviour
         UpdateSpriteOrientation(direction);
 
         // Check if we've hit the target
-        if (Vector3.Distance(transform.position, targetPosition) < 0.1f)
+        if (
+            Vector3.Distance(transform.position, target.transform.position + HIT_OFFSET) < HIT_RANGE
+        )
         {
             isHit = true;
 
@@ -58,6 +66,16 @@ public class Projectile : MonoBehaviour
             animator.SetTrigger("Hit");
 
             StartCoroutine(DestroyAfterAnimation());
+        }
+
+        // check if we've reached the target slot
+        if (Vector3.Distance(transform.position, targetPosition) < 0.1f)
+        {
+            isHit = true;
+
+            FloatingTextManager.Instance.SpawnText("MISS", transform.position, Color.gray);
+
+            Destroy(gameObject);
         }
     }
 

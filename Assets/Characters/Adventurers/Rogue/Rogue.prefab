@@ -52,9 +52,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   portraitSprite: {fileID: 21300000, guid: 44ac85027664a7e4192e305bf3634079, type: 3}
+  isMainPlayer: 0
   isEnemy: 0
   enemyPowerLevel: 0
-  role: 1
   aiStrength: 1
   maxHealth: 2000
   maxResource: 100
@@ -98,16 +98,16 @@ MonoBehaviour:
   resourceCost: 0
   castTime: 0
   damage: 80
+  duration: 1
   cooldown: 1.5
   threatMultiplier: 1
   statusEffectPrefab: {fileID: 0}
   animationDelay: 0
-  attackAnimationTrigger: Attack
+  attackAnimationTrigger: Attack 1
   forwardDuration: 0.167
-  forwardPauseDuration: 0.067
-  backwardPauseDuration: 0.067
+  pauseDuration: 0.133
   backwardDuration: 0.167
-  attackRange: 1
+  attackRange: 0.5
 --- !u!114 &-1936997599309346451
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -131,16 +131,16 @@ MonoBehaviour:
   resourceCost: 60
   castTime: 0
   damage: 60
+  duration: 1
   cooldown: 1
   threatMultiplier: 1
   statusEffectPrefab: {fileID: 7074106375902350592, guid: 24bf9a563845e604b806ca186a352f93, type: 3}
   animationDelay: 0.167
-  attackAnimationTrigger: Attack Extra
+  attackAnimationTrigger: Attack 2
   forwardDuration: 0.167
-  forwardPauseDuration: 0.167
-  backwardPauseDuration: 0.167
+  pauseDuration: 0.333
   backwardDuration: 0.167
-  attackRange: 1
+  attackRange: 0.5
 --- !u!95 &1642277420635291815
 Animator:
   serializedVersion: 5
@@ -151,7 +151,7 @@ Animator:
   m_GameObject: {fileID: 6162112231914770403}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
-  m_Controller: {fileID: 9100000, guid: 289c5f761a621c547b82a16c14bd2ff2, type: 2}
+  m_Controller: {fileID: 9100000, guid: b5554ee43e5c4024f91ed610a48fd0e7, type: 2}
   m_CullingMode: 0
   m_UpdateMode: 0
   m_ApplyRootMotion: 0
