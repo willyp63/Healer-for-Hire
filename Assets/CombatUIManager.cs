@@ -2,10 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CardInputHandler : MonoBehaviour
+public class CombatUIManager : MonoBehaviour
 {
     [SerializeField]
     private List<UnitFrameUI> playerFrames;
+
+    [SerializeField]
+    private List<CardUI> cardUIs;
+
+    [SerializeField]
+    private ResourceBarUI resourceBarUI;
 
     [SerializeField]
     private List<Bounds> playerBounds;
@@ -20,12 +26,21 @@ public class CardInputHandler : MonoBehaviour
         {
             mainCamera = FindObjectOfType<Camera>();
         }
+
+        // Initial card display update
+        UpdateCardDisplays();
+
+        // Initial resource bar update
+        UpdateResourceBar();
     }
 
     private void Update()
     {
         HandleMouseInput();
         HandleKeyboardInput();
+
+        // Update resource bar every frame to keep it current
+        UpdateResourceBar();
     }
 
     private void HandleMouseInput()
@@ -80,6 +95,140 @@ public class CardInputHandler : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
             CycleFrameSelection(-1);
+        }
+
+        // Handle card playing with 1, 2, 3, 4, 5, 6 keys
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            PlayCard(0);
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            PlayCard(1);
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            PlayCard(2);
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha4))
+        {
+            PlayCard(3);
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha5))
+        {
+            PlayCard(4);
+        }
+        else if (Input.GetKeyDown(KeyCode.Alpha6))
+        {
+            PlayCard(5);
+        }
+    }
+
+    private void PlayCard(int cardIndex)
+    {
+        if (cardIndex < 0 || cardIndex >= cardUIs.Count)
+        {
+            Debug.LogWarning($"Invalid card index: {cardIndex}");
+            return;
+        }
+
+        List<Card> activeCards = DeckManager.Instance.ActiveCards;
+        if (cardIndex >= activeCards.Count)
+        {
+            Debug.LogWarning($"No card at index {cardIndex}");
+            return;
+        }
+
+        Card cardToPlay = activeCards[cardIndex];
+        Debug.Log($"Playing card: {cardToPlay.cardName}");
+
+        // Get target (hovering over a unit frame or if not hovering any unit, the selected unit)
+        Character target = GetTarget();
+        if (target == null)
+        {
+            Debug.LogWarning("No valid target found for card");
+            return;
+        }
+
+        var mainPlayerCharacter = CharacterManager.Instance.MainPlayerCharacter;
+        mainPlayerCharacter.AddResource(-cardToPlay.resourceCost);
+
+        // Apply healing and status effect to the target
+        if (cardToPlay.healAmount > 0)
+        {
+            target.Heal(cardToPlay.healAmount);
+            Debug.Log($"Healed {target.name} for {cardToPlay.healAmount} health");
+        }
+
+        if (cardToPlay.statusEffectPrefab != null)
+        {
+            StatusEffect statusEffect = Instantiate(
+                cardToPlay.statusEffectPrefab,
+                target.transform
+            );
+            target.ApplyStatusEffect(statusEffect, mainPlayerCharacter);
+            Debug.Log(
+                $"Applied status effect {cardToPlay.statusEffectPrefab.EffectName} to {target.name}"
+            );
+        }
+
+        // Update resource bar after playing card
+        UpdateResourceBar();
+    }
+
+    private Character GetTarget()
+    {
+        // Get current mouse position in world coordinates
+        Vector3 mousePosition = Input.mousePosition;
+        Vector3 worldMousePosition = mainCamera.ScreenToWorldPoint(
+            new Vector3(mousePosition.x, mousePosition.y, 0f)
+        );
+        worldMousePosition.z = 0f;
+
+        // Check if hovering over a unit frame
+        int hoveredIndex = GetFrameIndexAtPosition(worldMousePosition);
+        if (hoveredIndex >= 0 && hoveredIndex < playerFrames.Count)
+        {
+            // Get the character associated with this frame
+            var playerCharacters = CharacterManager.Instance.GetActivePlayerCharacters();
+            if (hoveredIndex < playerCharacters.Count && playerCharacters[hoveredIndex] != null)
+            {
+                return playerCharacters[hoveredIndex];
+            }
+        }
+
+        // If not hovering over any unit frame, use the selected unit
+        if (selectedFrameIndex >= 0 && selectedFrameIndex < playerFrames.Count)
+        {
+            var playerCharacters = CharacterManager.Instance.GetActivePlayerCharacters();
+            if (
+                selectedFrameIndex < playerCharacters.Count
+                && playerCharacters[selectedFrameIndex] != null
+            )
+            {
+                return playerCharacters[selectedFrameIndex];
+            }
+        }
+
+        return null;
+    }
+
+    private void UpdateCardDisplays()
+    {
+        List<Card> activeCards = DeckManager.Instance.ActiveCards;
+
+        // Update active cards
+        for (int i = 0; i < cardUIs.Count; i++)
+        {
+            if (i < activeCards.Count)
+            {
+                cardUIs[i].SetCard(activeCards[i]);
+            }
+            else
+            {
+                // Set card UI to null if no card in this slot
+                cardUIs[i].SetCard(null);
+            }
         }
     }
 
@@ -187,5 +336,20 @@ public class CardInputHandler : MonoBehaviour
             // Draw wireframe cube for the bounds
             Gizmos.DrawWireCube(bounds.center, bounds.size);
         }
+    }
+
+    private void UpdateResourceBar()
+    {
+        if (resourceBarUI == null)
+            return;
+
+        var mainPlayerCharacter = CharacterManager.Instance.MainPlayerCharacter;
+        if (mainPlayerCharacter == null)
+            return;
+
+        resourceBarUI.SetResource(
+            mainPlayerCharacter.CurrentResource,
+            mainPlayerCharacter.MaxResource
+        );
     }
 }

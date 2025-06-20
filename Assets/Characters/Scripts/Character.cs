@@ -25,6 +25,10 @@ public class Character : MonoBehaviour
     public Sprite PortraitSprite => portraitSprite;
 
     [SerializeField]
+    private bool isMainPlayer = false;
+    public bool IsMainPlayer => isMainPlayer;
+
+    [SerializeField]
     private bool isEnemy = false;
     public bool IsEnemy => isEnemy;
 
@@ -76,6 +80,9 @@ public class Character : MonoBehaviour
     private bool isDead = false;
     public bool IsDead => isDead;
 
+    private bool isWaiting = false;
+    public bool IsWaiting => isWaiting;
+
     private const float GLOBAL_COOLDOWN = 1f;
 
     private float lastAttackTime = Mathf.NegativeInfinity;
@@ -123,6 +130,11 @@ public class Character : MonoBehaviour
 
         UpdateStatusEffects();
         UpdateResource();
+        UpdateThreat();
+
+        // Don't attack or make decisions while walking
+        if (isWaiting)
+            return;
 
         if (isCasting)
         {
@@ -152,6 +164,18 @@ public class Character : MonoBehaviour
 
         AddResource(resourceRegen);
         lastResourceUpdateTime = Time.time;
+    }
+
+    private void UpdateThreat()
+    {
+        var characters = threatTable.Keys.ToList();
+        foreach (var character in characters)
+        {
+            if (character.IsDead)
+            {
+                threatTable.Remove(character);
+            }
+        }
     }
 
     private void UpdateDecision()
@@ -330,6 +354,9 @@ public class Character : MonoBehaviour
     {
         RemoveAllStatusEffects();
 
+        currentHealth = 0;
+        currentResource = 0;
+
         animator.SetTrigger("Die");
         yield return new WaitForSeconds(2f);
         CharacterManager.Instance.RemoveCharacter(this);
@@ -396,5 +423,25 @@ public class Character : MonoBehaviour
         if (tauntEffect != null)
             return tauntEffect.Source;
         return null;
+    }
+
+    public void SetWaitingState(bool waiting)
+    {
+        isWaiting = waiting;
+    }
+
+    public void SetRunningState(bool running)
+    {
+        if (animator != null)
+        {
+            if (running)
+            {
+                animator.SetTrigger("Run");
+            }
+            else
+            {
+                animator.SetTrigger("Idle");
+            }
+        }
     }
 }

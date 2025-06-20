@@ -7,10 +7,10 @@ using UnityEngine;
 public class CharacterManager : Singleton<CharacterManager>
 {
     [SerializeField]
-    private List<Character> playerCharacters = new();
+    private Transform background;
 
     [SerializeField]
-    private List<Character> enemyCharacters = new();
+    private List<Character> playerCharacters = new();
 
     [SerializeField]
     private List<CharacterSlot> playerSlots;
@@ -27,6 +27,9 @@ public class CharacterManager : Singleton<CharacterManager>
     [SerializeField]
     private ThreatVisualizer threatVisualizer;
 
+    private Character mainPlayerCharacter;
+    public Character MainPlayerCharacter => mainPlayerCharacter;
+
     private Character[] activePlayerCharacters;
     private Character[] activeEnemyCharacters;
 
@@ -36,10 +39,26 @@ public class CharacterManager : Singleton<CharacterManager>
     // Update interval for UI
     private const float UI_UPDATE_INTERVAL = 0.1f;
 
+    private const float WAVE_DISTANCE = 8.8888f * 2f;
+
+    [SerializeField]
+    private float waveMovementSpeed = 2f;
+    public float WaveMovementSpeed => waveMovementSpeed;
+
+    private Vector3 originalBackgroundPosition;
+    private bool isWaveInProgress = false;
+    public bool IsWaveInProgress => isWaveInProgress;
+
     private void Start()
     {
         activePlayerCharacters = new Character[playerSlots.Count];
         activeEnemyCharacters = new Character[enemySlots.Count];
+
+        // Store original background position
+        if (background != null)
+        {
+            originalBackgroundPosition = background.position;
+        }
 
         InitializeBattle();
         StartCoroutine(UIUpdateLoop());
@@ -70,56 +89,42 @@ public class CharacterManager : Singleton<CharacterManager>
                 characterToUnitFrame[character] = playerFrames[slotIndex];
                 InitializeUnitFrame(character, playerFrames[slotIndex]);
             }
-        }
 
-        // Spawn enemy characters
-        int enemyCount = Mathf.Min(enemyCharacters.Count, enemySlots.Count);
-        int enemyStartIndex = (enemySlots.Count - enemyCount) / 2;
-
-        for (int i = 0; i < enemyCount; i++)
-        {
-            if (!enemyCharacters[i].IsEnemy)
-                Debug.LogError("Enemy character is player");
-
-            var slotIndex = enemyStartIndex + i;
-            var character = Instantiate(
-                enemyCharacters[i],
-                enemySlots[slotIndex].transform.position,
-                Quaternion.identity
-            );
-            character.transform.localScale = new(-1, 1, 1);
-            activeEnemyCharacters[slotIndex] = character;
-
-            // Assign corresponding UnitFrameUI
-            if (slotIndex < enemyFrames.Count)
+            if (character.IsMainPlayer)
             {
-                characterToUnitFrame[character] = enemyFrames[slotIndex];
-                InitializeUnitFrame(character, enemyFrames[slotIndex]);
+                mainPlayerCharacter = character;
             }
         }
 
         // Hide unused UnitFrames
-        HideUnusedUnitFrames();
+        HideUnusedPlayerUnitFrames();
+        HideUnusedEnemyUnitFrames();
     }
 
-    private void HideUnusedUnitFrames()
+    private void HideUnusedPlayerUnitFrames()
     {
         // Hide unused player UnitFrames
         for (int i = 0; i < playerFrames.Count; i++)
         {
-            if (activePlayerCharacters[i] == null)
-            {
-                playerFrames[i].gameObject.SetActive(false);
-            }
+            playerFrames[i].gameObject.SetActive(activePlayerCharacters[i] != null);
         }
+    }
 
+    private void HideUnusedEnemyUnitFrames()
+    {
         // Hide unused enemy UnitFrames
         for (int i = 0; i < enemyFrames.Count; i++)
         {
-            if (activeEnemyCharacters[i] == null)
-            {
-                enemyFrames[i].gameObject.SetActive(false);
-            }
+            enemyFrames[i].gameObject.SetActive(activeEnemyCharacters[i] != null);
+        }
+    }
+
+    private void HideEnemyUnitFrames()
+    {
+        // Hide unused enemy UnitFrames
+        for (int i = 0; i < enemyFrames.Count; i++)
+        {
+            enemyFrames[i].gameObject.SetActive(false);
         }
     }
 
@@ -284,6 +289,181 @@ public class CharacterManager : Singleton<CharacterManager>
         if (threatVisualizer != null)
         {
             threatVisualizer.ClearAllLines();
+        }
+    }
+
+    public void SpawnEnemyWave(List<Character> enemyPrefabs)
+    {
+        if (isWaveInProgress)
+        {
+            Debug.LogWarning("Wave already in progress, cannot spawn new wave");
+            return;
+        }
+
+        StartCoroutine(SpawnEnemyWaveCoroutine(enemyPrefabs));
+    }
+
+    private IEnumerator SpawnEnemyWaveCoroutine(List<Character> enemyPrefabs)
+    {
+        isWaveInProgress = true;
+
+        // Clear existing enemies
+        ClearEnemies();
+        HideEnemyUnitFrames();
+
+        // Spawn new enemies at WAVE_DISTANCE distance
+        int enemyCount = Mathf.Min(enemyPrefabs.Count, enemySlots.Count);
+        int enemyStartIndex = (enemySlots.Count - enemyCount) / 2;
+        List<Character> spawnedEnemies = new List<Character>();
+
+        for (int i = 0; i < enemyCount; i++)
+        {
+            if (!enemyPrefabs[i].IsEnemy)
+            {
+                Debug.LogError("Enemy character is player");
+                continue;
+            }
+
+            var slotIndex = enemyStartIndex + i;
+            var slotPosition = enemySlots[slotIndex].transform.position;
+            var spawnPosition = slotPosition + Vector3.right * WAVE_DISTANCE;
+
+            var character = Instantiate(enemyPrefabs[i], spawnPosition, Quaternion.identity);
+            character.transform.localScale = new Vector3(-1, 1, 1);
+            activeEnemyCharacters[slotIndex] = character;
+            spawnedEnemies.Add(character);
+
+            // Assign corresponding UnitFrameUI
+            if (slotIndex < enemyFrames.Count)
+            {
+                characterToUnitFrame[character] = enemyFrames[slotIndex];
+                InitializeUnitFrame(character, enemyFrames[slotIndex]);
+            }
+        }
+
+        // Set all player characters to running state
+        SetAllPlayerCharactersRunning(true);
+
+        // turn off all character's attacks
+        SetAllCharactersWaiting(true);
+
+        // Move enemies and background to the left
+        yield return StartCoroutine(MoveEnemiesToSlots(spawnedEnemies));
+
+        // show enemy unit frames
+        HideUnusedEnemyUnitFrames();
+
+        // Set all player characters back to idle
+        SetAllPlayerCharactersRunning(false);
+
+        // Wait for 1 second
+        yield return new WaitForSeconds(1f);
+
+        // turn on all character's attacks
+        SetAllCharactersWaiting(false);
+
+        // Move background back to original position
+        background.position = originalBackgroundPosition;
+
+        isWaveInProgress = false;
+    }
+
+    private void ClearEnemies()
+    {
+        for (int i = 0; i < activeEnemyCharacters.Length; i++)
+        {
+            if (activeEnemyCharacters[i] != null)
+            {
+                characterToUnitFrame.Remove(activeEnemyCharacters[i]);
+                Destroy(activeEnemyCharacters[i].gameObject);
+                activeEnemyCharacters[i] = null;
+            }
+        }
+    }
+
+    private void SetAllPlayerCharactersRunning(bool running)
+    {
+        foreach (var character in activePlayerCharacters)
+        {
+            if (character != null)
+            {
+                character.SetRunningState(running);
+            }
+        }
+    }
+
+    private void SetAllCharactersWaiting(bool waiting)
+    {
+        foreach (var character in activePlayerCharacters)
+        {
+            if (character != null)
+            {
+                character.SetWaitingState(waiting);
+            }
+        }
+
+        foreach (var character in activeEnemyCharacters)
+        {
+            if (character != null)
+            {
+                character.SetWaitingState(waiting);
+            }
+        }
+    }
+
+    private IEnumerator MoveEnemiesToSlots(List<Character> enemies)
+    {
+        if (background == null)
+            yield break;
+
+        Vector3 backgroundStartPos = background.position;
+        Vector3 backgroundTargetPos = backgroundStartPos + Vector3.left * WAVE_DISTANCE;
+
+        float elapsedTime = 0f;
+        float duration = WAVE_DISTANCE / waveMovementSpeed;
+
+        while (elapsedTime < duration)
+        {
+            float t = elapsedTime / duration;
+
+            // Move background
+            background.position = Vector3.Lerp(backgroundStartPos, backgroundTargetPos, t);
+
+            // Move enemies
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                if (enemies[i] != null)
+                {
+                    var slotIndex = Array.IndexOf(activeEnemyCharacters, enemies[i]);
+                    if (slotIndex != -1)
+                    {
+                        var slotPosition = enemySlots[slotIndex].transform.position;
+                        var startPosition = slotPosition + Vector3.right * WAVE_DISTANCE;
+                        enemies[i].transform.position = Vector3.Lerp(
+                            startPosition,
+                            slotPosition,
+                            t
+                        );
+                    }
+                }
+            }
+
+            elapsedTime += Time.deltaTime;
+            yield return null;
+        }
+
+        // Ensure final positions are exact
+        background.position = backgroundTargetPos;
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            if (enemies[i] != null)
+            {
+                var slotIndex = Array.IndexOf(activeEnemyCharacters, enemies[i]);
+                if (slotIndex != -1)
+                {
+                    enemies[i].transform.position = enemySlots[slotIndex].transform.position;
+                }
+            }
         }
     }
 }

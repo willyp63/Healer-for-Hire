@@ -83,6 +83,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   portraitSprite: {fileID: 21300000, guid: 41e8c6d6ffd2041489505391804cabab, type: 3}
+  isMainPlayer: 1
   isEnemy: 0
   enemyPowerLevel: 0
   role: 2
